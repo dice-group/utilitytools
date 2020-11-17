@@ -13,8 +13,8 @@ public class NtFileUpdaterTest {
 
   @Test
   public void NtFileUpdaterShouldReadFile() {
-    String fn = service.PreProccessFile(fileName);
-    service.Update(fn);
+    // String fn = service.PreProccessFile(fileName);
+    service.Update(fileName);
   }
 
   // @Test
