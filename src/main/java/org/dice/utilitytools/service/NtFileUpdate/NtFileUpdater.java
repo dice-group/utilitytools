@@ -9,8 +9,10 @@ import java.io.InputStreamReader;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryFactory;
@@ -25,8 +27,6 @@ import org.dice.utilitytools.service.Query.QueryExecutioner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import com.github.andrewoma.dexx.collection.HashMap;
-import com.github.andrewoma.dexx.collection.Pair;
 
 @Component
 public class NtFileUpdater {
@@ -65,28 +65,28 @@ public class NtFileUpdater {
     String[] fileNameParts = fileName.split("\\.");
     List<Statement> ss = new ArrayList<Statement>();
 
-    Iterator<Pair<String, RDFProcessEntity>> iterator = proccessMap.iterator();
+    Iterator<Entry<String, RDFProcessEntity>> iterator = proccessMap.entrySet().iterator();
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss");
     LocalDateTime now = LocalDateTime.now();
     FileWriter fw =
         new FileWriter("resulttext-" + fileNameParts[0] + "_" + dtf.format(now) + ".txt");
     int counter = 0;
     while (iterator.hasNext()) {
-      Pair<String, RDFProcessEntity> entry = iterator.next();
+      Entry<String, RDFProcessEntity> entry = iterator.next();
       // ss.add(StatementImpl(entry.component2().getSubject(), entry.component2().getPredicate(),
       // entry.component2().getObject()));
-      if (entry.component2().getDoesItChange()) {
+      if (entry.getValue().getDoesItChange()) {
         counter = counter + 1;
         fw.append(
-            entry.component1().toString()
+            entry.getKey().toString()
                 + " "
-                + entry.component2().getSubject()
+                + entry.getValue().getSubject()
                 + " "
-                + entry.component2().getPredicate()
+                + entry.getValue().getPredicate()
                 + " "
-                + entry.component2().getObject()
+                + entry.getValue().getObject()
                 + " it was "
-                + entry.component2().getPreviusObject()
+                + entry.getValue().getPreviusObject()
                 + "\n");
       }
     }
@@ -105,7 +105,7 @@ public class NtFileUpdater {
         String key = ExtractKey(statement.getSubject().toString());
         if (!proccessMap.containsKey(key)) {
           // System.out.println("Size of the hash map: " + proccessMap.size());
-          proccessMap = proccessMap.put(key, new RDFProcessEntity());
+          proccessMap.put(key, new RDFProcessEntity());
           // System.out.println("Size of the hash map: " + proccessMap.size());
         }
         // System.out.println("Size of the hash map: " + proccessMap.size());
@@ -143,7 +143,7 @@ public class NtFileUpdater {
           currentStatement.setIsProcessed(true);
           // System.out.println("after: " + current.toString());
         }
-        proccessMap = proccessMap.put(key, currentStatement);
+        proccessMap.put(key, currentStatement);
       }
     }
   }
@@ -221,7 +221,7 @@ public class NtFileUpdater {
 
   public String PreProccessFile(String fileName) {
     String[] fileNameParts = fileName.split("\\.");
-    Iterator<Pair<String, RDFProcessEntity>> iterator = proccessMap.iterator();
+    // Iterator<Entry<String, RDFProcessEntity>> iterator = proccessMap.entrySet().iterator();
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("-yyyy-MM-dd-HH-mm-ss");
     LocalDateTime now = LocalDateTime.now();
 

@@ -1,10 +1,5 @@
 package org.dice.utilitytools.service.NtFileUpdate;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -22,20 +17,20 @@ public class NtFileUpdaterTest {
     service.Update(fn);
   }
 
-  @Test
-  public void PreProccessWorks() {
-    service.PreProccessFile(fileName);
-  }
+  // @Test
+  // public void PreProccessWorks() {
+  // service.PreProccessFile(fileName);
+  // }
 
-  @Test
-  public void givenFileNameAsAbsolutePath_whenUsingClasspath_thenFileData() throws IOException {
+  // @Test
+  // public void givenFileNameAsAbsolutePath_whenUsingClasspath_thenFileData() throws IOException {
 
-    // Object t = new FileInputStream(getClass().getResourceAsStream(fileName));
+  // Object t = new FileInputStream(getClass().getResourceAsStream(fileName));
 
-    try (InputStream inputStream = getClass().getResourceAsStream(fileName);
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-      String contents = reader.lines().collect(Collectors.joining(System.lineSeparator()));
-      // System.out.println(contents);
-    }
-  }
+  // try (InputStream inputStream = getClass().getResourceAsStream(fileName);
+  // BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+  // String contents = reader.lines().collect(Collectors.joining(System.lineSeparator()));
+  // System.out.println(contents);
+  // }
+  // }
 }
