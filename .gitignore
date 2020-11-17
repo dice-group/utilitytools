@@ -31,3 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
+
+
+*.txt
+*.log
+*.tsv
+*.nt
+
