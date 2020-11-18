@@ -26,6 +26,7 @@ public class ModelProcessor {
   @Autowired private QueryExecutioner queryExecutioner;
 
   private HashMap<String, RDFProcessEntity> proccessMap = new HashMap<String, RDFProcessEntity>();
+  private HashMap<String, Integer> lastSelectedObject = new HashMap<String, Integer>();
 
   public ModelProcessor() {}
 
@@ -106,7 +107,20 @@ public class ModelProcessor {
         // check if the current object is valid
         if (!actualObjects.contains(current.getObject())) {
           // replace with valid object
-          current.setObject(actualObjects.get(0).toString());
+          String checkKey = current.getSubject() + current.getPredicate();
+          if (lastSelectedObject.containsKey(checkKey)) {
+            int lastIndex = lastSelectedObject.get(checkKey);
+            lastIndex = lastIndex + 1;
+            if (lastIndex < actualObjects.size()) {
+              current.setObject(actualObjects.get(lastIndex).toString());
+              lastSelectedObject.put(checkKey, lastIndex);
+            } else {
+              current.setObject(actualObjects.get(0).toString());
+            }
+          } else {
+            lastSelectedObject.put(checkKey, 0);
+            current.setObject(actualObjects.get(0).toString());
+          }
           current.setDoesItChange(true);
         }
         current.setAfterProcessResultIsAcceptable(true);

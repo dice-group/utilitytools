@@ -60,7 +60,8 @@ public class NtFileUpdater {
 
     Iterator<Entry<String, RDFProcessEntity>> iterator = proccessMap.entrySet().iterator();
 
-    FileWriter fw = new FileWriter("resulttext-" + fileNameParts[0] + ".txt");
+    FileWriter fw = new FileWriter("resulttext-" + fileNameParts[0] + ".tsv");
+    FileWriter fwReport = new FileWriter("Report-resulttext-" + fileNameParts[0] + ".txt");
 
     List<Statement> statements = new ArrayList<Statement>();
 
@@ -74,17 +75,17 @@ public class NtFileUpdater {
         // entry.component2().getObject()));
         if (entry.getValue().getDoesItChange()) {
           // counter = counter + 1;
-          /*fw.append(
-          entry.getKey().toString()
-              + " "
-              + entry.getValue().getSubject()
-              + " "
-              + entry.getValue().getPredicate()
-              + " "
-              + entry.getValue().getObject()
-              + " it was "
-              + entry.getValue().getPreviusObject()
-              + "\n");*/
+          fwReport.append(
+              entry.getKey().toString()
+                  + " "
+                  + entry.getValue().getSubject()
+                  + " "
+                  + entry.getValue().getPredicate()
+                  + " "
+                  + entry.getValue().getObject()
+                  + " it was "
+                  + entry.getValue().getPreviusObject()
+                  + "\n");
 
           Resource resourceSubject = ResourceFactory.createResource(entry.getValue().getSubject());
           Property property = ResourceFactory.createProperty(entry.getValue().getPredicate());
@@ -103,5 +104,6 @@ public class NtFileUpdater {
 
     // fw.append("total changes are : " + counter);
     fw.close();
+    fwReport.close();
   }
 }
