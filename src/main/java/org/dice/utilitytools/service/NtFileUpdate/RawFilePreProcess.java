@@ -26,12 +26,23 @@ public class RawFilePreProcess {
                     new FileInputStream("./" + fileName)));
         FileWriter fw = new FileWriter("./" + PreProccessedFileName)) {
       String st;
+      // https://www.utf8-chartable.de/
       while ((st = br.readLine()) != null) {
         fw.write(
             st.replaceAll("\\s+", "")
                 .replaceAll("Å", "ō")
                 .replaceAll("Ä", "č")
                 .replaceAll("Ä‡", "ć")
+                .replaceAll("%C3%A1", "á")
+                .replaceAll("%C3%A4", "ä")
+                .replaceAll("%C3%A7", "ç")
+                .replaceAll("%C3%A9", "é")
+                .replaceAll("%C3%AD", "í")
+                .replaceAll("%C3%B6", "ö")
+                .replaceAll("%C3%B8", "ø")
+                .replaceAll("%C5%8D", "ō")
+                .replaceAll("%C5%8C", "Ō")
+                .replaceAll("%C3%89", "É")
                 .trim()
                 .concat("\n"));
       }

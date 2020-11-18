@@ -9,8 +9,8 @@ public class NtFileUpdaterTest {
 
   @Autowired NtFileUpdater service;
 
-  final String fileName = "SNLP2019_test.nt";
-
+  final String fileName = "SNLP2019_training.nt";
+  // final String fileName = "SNLP2019_test.nt";
   @Test
   public void NtFileUpdaterShouldReadFile() {
     // String fn = service.PreProccessFile(fileName);
