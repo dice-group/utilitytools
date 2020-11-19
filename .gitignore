@@ -37,4 +37,4 @@ build/
 *.log
 *.tsv
 *.nt
-
+!test.nt
