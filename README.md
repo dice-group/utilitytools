@@ -19,7 +19,7 @@ and also generate verbalized sentence like
 3252390 Trevor Ariza's team is Houston Rockets.
 ```
 
-##for run 
+## for run 
 for run this application first build the package with this comment
 ```
  mvn clean package
