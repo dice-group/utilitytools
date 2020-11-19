@@ -1,4 +1,4 @@
-<h1> A place for a tiny useful tools</h1>
+# A place for a tiny useful tools
 
 the first one is "NtFileUpdater" this small get an nt file (N-Tripel) like below
 ```
@@ -19,7 +19,7 @@ and also generate verbalized sentence like
 3252390 Trevor Ariza's team is Houston Rockets.
 ```
 
-<h2>for run </h2>
+##for run 
 for run this application first build the package with this comment
 ```
  mvn clean package
