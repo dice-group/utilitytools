@@ -18,7 +18,7 @@ public class UtilitytoolsApplication implements CommandLineRunner {
 
   @Override
   public void run(String... args) {
-    if (args == null) {
+    if (args == null || args.length == 0) {
       System.out.println("no file mentioned");
       return;
     }
