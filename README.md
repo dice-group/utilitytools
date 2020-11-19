@@ -1,4 +1,4 @@
-# A place for a tiny useful tools
+# A place for tiny useful tools
 
 the first one is "NtFileUpdater" this small get an nt file (N-Tripel) like below
 ```
