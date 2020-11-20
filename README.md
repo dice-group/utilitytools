@@ -26,7 +26,10 @@ for run this application first build the package with this comment
 ```
 
 then run with this comment
+if this is a training file it should be mentioned with "t" key as the last parameter
+also if you want to replace the statements in the old tsv file then provide the tsv file as a second parameter
 
 ```
-java -jar target/utilitytools-0.0.1-SNAPSHOT.jar FileName
+java -jar target/utilitytools-0.0.1-SNAPSHOT.jar SNLP2019_training.nt SNLP2019_training.tsv t
+
 ```
