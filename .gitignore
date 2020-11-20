@@ -38,3 +38,5 @@ build/
 *.tsv
 *.nt
 !test.nt
+!test.tsv
+!training.tsv

@@ -38,8 +38,26 @@ public class UtilitytoolsApplication implements CommandLineRunner {
       return;
     }
 
-    service.Update(args[0]);
+    if (args.length == 2) {
+      boolean isTraining = false;
+      if (args[1].toLowerCase().equals("t")) {
+        isTraining = true;
+      }
+      service.Update(args[0], "", isTraining);
+    }
 
-    System.out.println(" Job Done");
+    if (args.length == 3) {
+      boolean isTraining = false;
+      if (args[2].toLowerCase().equals("t")) {
+        isTraining = true;
+      }
+      service.Update(args[0], args[1], isTraining);
+    }
+
+    if (args.length == 2 || args.length == 3) {
+      System.out.println(" Job Done");
+    } else {
+      System.out.println(" wrong parameters!");
+    }
   }
 }

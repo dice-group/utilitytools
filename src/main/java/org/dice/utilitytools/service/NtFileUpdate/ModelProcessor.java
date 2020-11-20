@@ -84,19 +84,19 @@ public class ModelProcessor {
     return proccessMap;
   }
 
-  private boolean IsIntended(Statement statement) {
+  public boolean IsIntended(Statement statement) {
     if (statement.getSubject().asNode().toString().contains("dbpedia")) {
       return false;
     }
     return true;
   }
 
-  private String ExtractKey(String input) {
+  public String ExtractKey(String input) {
     String[] splited = input.split("/");
     return splited[splited.length - 1];
   }
 
-  private RDFProcessEntity Process(RDFProcessEntity current) {
+  public RDFProcessEntity Process(RDFProcessEntity current) {
     List<String> actualObjects = DoQuery(current.getSubject(), current.getPredicate());
     if (current.getHasTruthValue()) {
       // this statement should be valid
@@ -145,7 +145,7 @@ public class ModelProcessor {
     return current;
   }
 
-  private List<String> DoQuery(String subject, String predicate) {
+  public List<String> DoQuery(String subject, String predicate) {
     String textOfQuery =
         "select distinct  ?o where " + "{<" + subject + "> <" + predicate + "> ?o" + "}";
     Query query = QueryFactory.create(textOfQuery);

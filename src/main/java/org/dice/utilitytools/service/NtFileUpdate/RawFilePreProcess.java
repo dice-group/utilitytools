@@ -17,7 +17,8 @@ public class RawFilePreProcess {
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("-yyyy-MM-dd-HH-mm-ss");
     LocalDateTime now = LocalDateTime.now();
 
-    String PreProccessedFileName = fileNameParts[0] + dtf.format(now) + "." + fileNameParts[1];
+    String PreProccessedFileName =
+        fileNameParts[0] + "_RawPreProcess_" + dtf.format(now) + "." + fileNameParts[1];
     try (BufferedReader br =
             new BufferedReader(new InputStreamReader(new FileInputStream("./" + fileName)));
         FileWriter fw = new FileWriter("./" + PreProccessedFileName)) {

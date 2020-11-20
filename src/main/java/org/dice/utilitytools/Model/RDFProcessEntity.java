@@ -52,6 +52,14 @@ public class RDFProcessEntity {
     return HasTruthValue;
   }
 
+  public String getStringFormHasTruthValue() {
+    if (HasTruthValue) {
+      return "1.0";
+    } else {
+      return "0.0";
+    }
+  }
+
   public void setHasTruthValue(Boolean hasTruthValue) {
     HasTruthValue = hasTruthValue;
   }
