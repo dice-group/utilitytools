@@ -15,6 +15,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.impl.StatementImpl;
+import org.dice.utilitytools.Model.ProcessedModelResponse;
 import org.dice.utilitytools.Model.RDFProcessEntity;
 import org.dllearner.kb.sparql.SparqlEndpoint;
 import org.slf4j.Logger;
@@ -30,8 +31,10 @@ public class ResultExtractor {
       new SemWeb2NLVerbalizer(SparqlEndpoint.getEndpointDBpedia(), true, true);
 
   public HashMap<String, String> ExtractResult(
-      HashMap<String, RDFProcessEntity> proccessMap, String fileName, boolean isTrainingData)
+      ProcessedModelResponse proccessedModel, String fileName, boolean isTrainingData)
       throws IOException {
+
+    System.out.println("Start Extract result");
 
     HashMap<String, String> resultMap = new HashMap<String, String>();
 
@@ -42,12 +45,16 @@ public class ResultExtractor {
     FileWriter fwReport =
         new FileWriter(fileNameParts[0].replace("RawPreProcess", "ResultTextReport") + ".txt");
 
-    Iterator<Entry<String, RDFProcessEntity>> iterator = proccessMap.entrySet().iterator();
+    FileWriter fwNt = new FileWriter(fileNameParts[0].replace("RawPreProcess", "New") + ".nt");
+
+    Iterator<Entry<String, RDFProcessEntity>> iterator =
+        proccessedModel.getIntendedStatements().entrySet().iterator();
 
     while (iterator.hasNext()) {
       try {
         Entry<String, RDFProcessEntity> entry = iterator.next();
         // System.out.println(entry.getKey());
+        GenerateNtFile(fwNt, entry);
         if (entry.getValue().getDoesItChange()) {
           GenerateReport(fwReport, entry);
           String verbalizedStatement = GenerateVerbalizedSentence(entry);
@@ -68,6 +75,15 @@ public class ResultExtractor {
     fw.close();
     fwReport.close();
 
+    System.out.println(
+        "getUnIntendedStatements are :" + proccessedModel.getUnIntendedStatements().size());
+
+    for (Statement s : proccessedModel.getUnIntendedStatements()) {
+      fwNt.append(s.getSubject() + " " + s.getPredicate() + " " + s.getObject() + "\n");
+    }
+
+    fwNt.close();
+    System.out.println("Changes are ready");
     return resultMap;
   }
 
@@ -95,5 +111,61 @@ public class ResultExtractor {
             + " it was "
             + entry.getValue().getPreviusObject()
             + "\n");
+  }
+
+  private void GenerateNtFile(FileWriter fwNt, Entry<String, RDFProcessEntity> entry)
+      throws IOException {
+    // <http://swc2017.aksw.org/task2/dataset/3494664>
+    // <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>
+    // <http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement> .
+    fwNt.append(
+        "<http://swc2017.aksw.org/task2/dataset/"
+            + entry.getKey()
+            + "> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <"
+            + entry.getValue().getType()
+            + "> .\n");
+
+    if (entry.getValue().getHasTruthValue()) {
+      // <http://swc2017.aksw.org/task2/dataset/3494664> <http://swc2017.aksw.org/hasTruthValue>
+      // "1.0"^^<http://www.w3.org/2001/XMLSchema#float> .
+      fwNt.append(
+          "<http://swc2017.aksw.org/task2/dataset/"
+              + entry.getKey()
+              + "> <http://swc2017.aksw.org/hasTruthValue> \"1.0\"^^<http://www.w3.org/2001/XMLSchema#float> .\n");
+    } else {
+      fwNt.append(
+          "<http://swc2017.aksw.org/task2/dataset/"
+              + entry.getKey()
+              + "> <http://swc2017.aksw.org/hasTruthValue> \"0.0\"^^<http://www.w3.org/2001/XMLSchema#float> .\n");
+    }
+
+    // <http://swc2017.aksw.org/task2/dataset/3494664>
+    // <http://www.w3.org/1999/02/22-rdf-syntax-ns#subject>
+    // <http://dbpedia.org/resource/Chris_Kaman> .
+    fwNt.append(
+        "<http://swc2017.aksw.org/task2/dataset/"
+            + entry.getKey()
+            + "> <http://www.w3.org/1999/02/22-rdf-syntax-ns#subject> <"
+            + entry.getValue().getSubject()
+            + "> .\n");
+
+    // <http://swc2017.aksw.org/task2/dataset/3494664>
+    // <http://www.w3.org/1999/02/22-rdf-syntax-ns#predicate> <http://dbpedia.org/ontology/author> .
+    fwNt.append(
+        "<http://swc2017.aksw.org/task2/dataset/"
+            + entry.getKey()
+            + "> <http://www.w3.org/1999/02/22-rdf-syntax-ns#predicate> <"
+            + entry.getValue().getPredicate()
+            + "> .\n");
+
+    // <http://swc2017.aksw.org/task2/dataset/3494664>
+    // <http://www.w3.org/1999/02/22-rdf-syntax-ns#object>
+    // <http://dbpedia.org/resource/New_Orleans_Hornets> .
+    fwNt.append(
+        "<http://swc2017.aksw.org/task2/dataset/"
+            + entry.getKey()
+            + "> <http://www.w3.org/1999/02/22-rdf-syntax-ns#object> <"
+            + entry.getValue().getObject()
+            + "> .\n");
   }
 }

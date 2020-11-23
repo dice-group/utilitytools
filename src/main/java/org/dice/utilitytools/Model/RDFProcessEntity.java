@@ -5,6 +5,7 @@ public class RDFProcessEntity {
   private String Predicate;
   private String Object;
   private String PreviusObject;
+  private String Type;
   private Boolean HasTruthValue;
   private int RedyForProcess;
   private Boolean IsProcessed;
@@ -98,6 +99,14 @@ public class RDFProcessEntity {
 
   public String getPreviusObject() {
     return PreviusObject;
+  }
+
+  public String getType() {
+    return Type;
+  }
+
+  public void setType(String type) {
+    Type = type;
   }
 
   @Override

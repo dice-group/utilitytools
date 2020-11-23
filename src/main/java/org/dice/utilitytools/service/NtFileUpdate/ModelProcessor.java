@@ -11,6 +11,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
+import org.dice.utilitytools.Model.ProcessedModelResponse;
 import org.dice.utilitytools.Model.RDFProcessEntity;
 import org.dice.utilitytools.service.Query.QueryExecutioner;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,25 +26,29 @@ public class ModelProcessor {
 
   @Autowired private QueryExecutioner queryExecutioner;
 
-  private HashMap<String, RDFProcessEntity> proccessMap = new HashMap<String, RDFProcessEntity>();
   private HashMap<String, Integer> lastSelectedObject = new HashMap<String, Integer>();
 
   public ModelProcessor() {}
 
-  HashMap<String, RDFProcessEntity> ProcessModel(Model model) {
+  ProcessedModelResponse ProcessModel(Model model) {
+    System.out.println("Start Processing...");
+    System.out.println("it may take a few minutes");
+
+    ProcessedModelResponse responce = new ProcessedModelResponse();
+
     queryExecutioner.setServiceRequestURL(sparqlServelEndpoint);
     StmtIterator iterator = model.listStatements();
     while (iterator.hasNext()) {
       Statement statement = iterator.next();
       if (IsIntended(statement)) {
         String key = ExtractKey(statement.getSubject().toString());
-        if (!proccessMap.containsKey(key)) {
+        if (!responce.getIntendedStatements().containsKey(key)) {
           // System.out.println("Size of the hash map: " + proccessMap.size());
-          proccessMap.put(key, new RDFProcessEntity());
+          responce.Put(key, new RDFProcessEntity());
           // System.out.println("Size of the hash map: " + proccessMap.size());
         }
         // System.out.println("Size of the hash map: " + proccessMap.size());
-        RDFProcessEntity currentStatement = proccessMap.get(key);
+        RDFProcessEntity currentStatement = responce.Get(key);
         RDFNode object = statement.getObject();
         String predicate = statement.getPredicate().toString().toLowerCase();
 
@@ -71,17 +76,24 @@ public class ModelProcessor {
           currentStatement.AddStep();
         }
 
-        if (!currentStatement.getIsProcessed() && currentStatement.getRedyForProcess() == 4) {
+        if (predicate.contains("type")) {
+          currentStatement.setType(object.toString());
+          currentStatement.AddStep();
+        }
+
+        if (!currentStatement.getIsProcessed() && currentStatement.getRedyForProcess() == 5) {
           // System.out.println("befor: " + current.toString());
           currentStatement = Process(currentStatement);
           currentStatement.setIsProcessed(true);
           // System.out.println("after: " + current.toString());
         }
-        proccessMap.put(key, currentStatement);
+        responce.Put(key, currentStatement);
+      } else {
+        responce.Add(statement);
       }
     }
-
-    return proccessMap;
+    System.out.println("Process done");
+    return responce;
   }
 
   public boolean IsIntended(Statement statement) {
@@ -98,6 +110,7 @@ public class ModelProcessor {
 
   public RDFProcessEntity Process(RDFProcessEntity current) {
     List<String> actualObjects = DoQuery(current.getSubject(), current.getPredicate());
+
     if (current.getHasTruthValue()) {
       // this statement should be valid
       if (actualObjects.size() == 0) {
@@ -134,15 +147,35 @@ public class ModelProcessor {
       } else {
         // check if the current object is valid then we should change it with something else
         if (actualObjects.contains(current.getObject())) {
-          // replace with valid object
-          // TODO
-          current.setObject("something else");
+          current.setObject(ProvideNewFalseObject(current.getPredicate(), current.getObject()));
           current.setDoesItChange(true);
         }
         current.setAfterProcessResultIsAcceptable(true);
       }
     }
     return current;
+  }
+
+  private String ProvideNewFalseObject(String predicate, String object) {
+    if (predicate.toLowerCase().equals("http://dbpedia.org/ontology/birthplace")
+        || predicate.toLowerCase().equals("http://dbpedia.org/ontology/foundationplace")
+        || predicate.toLowerCase().equals("http://dbpedia.org/ontology/deathplace")) {
+      if (object.toLowerCase().equals("http://dbpedia.org/resource/Sevier_County,_Tennessee")) {
+        return "http://dbpedia.org/resource/Netherlands";
+      } else {
+        return "http://dbpedia.org/resource/Sevier_County,_Tennessee";
+      }
+    }
+
+    if (predicate.toLowerCase().equals("http://dbpedia.org/ontology/team")) {
+      if (object.toLowerCase().equals("http://dbpedia.org/resource/Atlanta_Hawks")) {
+        return "http://dbpedia.org/resource/Washington_Wizards";
+      } else {
+        return "http://dbpedia.org/resource/Phoenix_Suns";
+      }
+    }
+
+    return "Something Else";
   }
 
   public List<String> DoQuery(String subject, String predicate) {

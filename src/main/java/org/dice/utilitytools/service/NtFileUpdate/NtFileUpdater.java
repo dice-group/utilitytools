@@ -2,7 +2,7 @@ package org.dice.utilitytools.service.NtFileUpdate;
 
 import java.util.HashMap;
 import org.aksw.simba.bengal.verbalizer.SemWeb2NLVerbalizer;
-import org.dice.utilitytools.Model.RDFProcessEntity;
+import org.dice.utilitytools.Model.ProcessedModelResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +23,7 @@ public class NtFileUpdater {
 
   @Autowired private ResultPatcher patcher;
 
-  HashMap<String, RDFProcessEntity> processMap = new HashMap<String, RDFProcessEntity>();
+  ProcessedModelResponse processedModel;
 
   HashMap<String, String> resultMap = new HashMap<String, String>();
 
@@ -35,8 +35,8 @@ public class NtFileUpdater {
     try {
       fileName = preProcessor.Process(fileName);
       model.build(fileName);
-      processMap = processor.ProcessModel(model.getModel());
-      resultMap = extractor.ExtractResult(processMap, fileName, isTraining);
+      processedModel = processor.ProcessModel(model.getModel());
+      resultMap = extractor.ExtractResult(processedModel, fileName, isTraining);
       if (verbalizedFileForReplace != "") {
         patcher.patch(verbalizedFileForReplace, resultMap);
       }

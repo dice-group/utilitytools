@@ -28,6 +28,7 @@ public class RawFilePreProcess {
         fw.write(Enhance(st));
       }
       fw.close();
+      System.out.println("Raw file Preprocessed...");
     } catch (IOException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
