@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import org.springframework.stereotype.Component;
@@ -16,13 +17,14 @@ import org.springframework.stereotype.Component;
 public class ResultPatcher {
   HashMap<String, String> mainFileMap = new HashMap<String, String>();
 
-  public void patch(String fileName, HashMap<String, String> replaceStatements) {
+  public void patch(
+      String fileName, HashMap<String, String> replaceStatements, HashSet<String> toRemove) {
     mainFileMap = ReadFile(fileName);
     mainFileMap = Replace(mainFileMap, replaceStatements);
-    WriteFinalResult(mainFileMap, fileName);
+    WriteFinalResult(mainFileMap, fileName, toRemove);
   }
 
-  void WriteFinalResult(HashMap<String, String> map, String fileName) {
+  void WriteFinalResult(HashMap<String, String> map, String fileName, HashSet<String> toRemove) {
 
     String[] fileNameParts = fileName.split("\\.");
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("-yyyy-MM-dd-HH-mm-ss");
@@ -35,7 +37,8 @@ public class ResultPatcher {
       String st;
       while (itr.hasNext()) {
         Entry<String, String> entry = itr.next();
-        fw.append(entry.getKey() + "\t" + entry.getValue() + "\n");
+        if (!toRemove.contains(entry.getKey()))
+          fw.append(entry.getKey() + "\t" + entry.getValue() + "\n");
       }
       fw.close();
     } catch (IOException e) {

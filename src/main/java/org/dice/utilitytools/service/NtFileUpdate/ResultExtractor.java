@@ -54,6 +54,9 @@ public class ResultExtractor {
       try {
         Entry<String, RDFProcessEntity> entry = iterator.next();
         // System.out.println(entry.getKey());
+        if (proccessedModel.IsKeyExistForRemove(entry.getKey())) {
+          continue;
+        }
         GenerateNtFile(fwNt, entry);
         if (entry.getValue().getDoesItChange()) {
           GenerateReport(fwReport, entry);

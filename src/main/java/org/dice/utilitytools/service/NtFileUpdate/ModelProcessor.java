@@ -2,6 +2,7 @@ package org.dice.utilitytools.service.NtFileUpdate;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
@@ -27,6 +28,7 @@ public class ModelProcessor {
   @Autowired private QueryExecutioner queryExecutioner;
 
   private HashMap<String, Integer> lastSelectedObject = new HashMap<String, Integer>();
+  private HashSet<String> shouldRemoveKeys = new HashSet<String>();
 
   public ModelProcessor() {}
 
@@ -69,6 +71,10 @@ public class ModelProcessor {
         if (predicate.contains("predicate")) {
           currentStatement.setPredicate(object.toString());
           currentStatement.AddStep();
+
+          if (object.toString().toLowerCase().contains("office")) {
+            responce.AddKeyForRemove(key);
+          }
         }
 
         if (predicate.contains("subject")) {
@@ -82,10 +88,8 @@ public class ModelProcessor {
         }
 
         if (!currentStatement.getIsProcessed() && currentStatement.getRedyForProcess() == 5) {
-          // System.out.println("befor: " + current.toString());
           currentStatement = Process(currentStatement);
           currentStatement.setIsProcessed(true);
-          // System.out.println("after: " + current.toString());
         }
         responce.Put(key, currentStatement);
       } else {

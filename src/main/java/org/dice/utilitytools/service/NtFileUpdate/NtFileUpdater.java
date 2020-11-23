@@ -38,7 +38,7 @@ public class NtFileUpdater {
       processedModel = processor.ProcessModel(model.getModel());
       resultMap = extractor.ExtractResult(processedModel, fileName, isTraining);
       if (verbalizedFileForReplace != "") {
-        patcher.patch(verbalizedFileForReplace, resultMap);
+        patcher.patch(verbalizedFileForReplace, resultMap, processedModel.getShouldRemoveKeys());
       }
 
     } catch (Exception exp) {
