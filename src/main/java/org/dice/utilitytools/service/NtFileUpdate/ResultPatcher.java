@@ -19,9 +19,15 @@ public class ResultPatcher {
 
   public void patch(
       String fileName, HashMap<String, String> replaceStatements, HashSet<String> toRemove) {
-    mainFileMap = ReadFile(fileName);
-    mainFileMap = Replace(mainFileMap, replaceStatements);
-    WriteFinalResult(mainFileMap, fileName, toRemove);
+    try {
+      System.out.println("start patch tsv file");
+      mainFileMap = ReadFile(fileName);
+      mainFileMap = Replace(mainFileMap, replaceStatements);
+      WriteFinalResult(mainFileMap, fileName, toRemove);
+      System.out.println("done patch tsv file");
+    } catch (Exception exp) {
+      System.out.println("face error:" + exp.getMessage());
+    }
   }
 
   void WriteFinalResult(HashMap<String, String> map, String fileName, HashSet<String> toRemove) {

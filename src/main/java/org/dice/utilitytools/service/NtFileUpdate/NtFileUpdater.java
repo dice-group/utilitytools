@@ -33,6 +33,8 @@ public class NtFileUpdater {
 
   public void Update(String fileName, String verbalizedFileForReplace, boolean isTraining) {
     try {
+      System.out.println("fileName is :" + fileName);
+      System.out.println("verbalizedFileForReplace is :" + verbalizedFileForReplace);
       fileName = preProcessor.Process(fileName);
       model.build(fileName);
       processedModel = processor.ProcessModel(model.getModel());

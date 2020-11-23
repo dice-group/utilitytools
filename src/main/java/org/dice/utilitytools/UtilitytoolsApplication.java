@@ -18,6 +18,11 @@ public class UtilitytoolsApplication implements CommandLineRunner {
 
   @Override
   public void run(String... args) {
+
+    for (String s : args) {
+      System.out.println(s);
+    }
+
     if (args == null || args.length == 0) {
       System.out.println("no file mentioned");
       return;
@@ -42,8 +47,10 @@ public class UtilitytoolsApplication implements CommandLineRunner {
       boolean isTraining = false;
       if (args[1].toLowerCase().equals("t")) {
         isTraining = true;
+        service.Update(args[0], "", isTraining);
+      } else {
+        service.Update(args[0], args[1], isTraining);
       }
-      service.Update(args[0], "", isTraining);
     }
 
     if (args.length == 3) {
