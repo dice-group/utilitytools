@@ -83,7 +83,17 @@
 					<artifactId>jlibsvm</artifactId>
 				</exclusion>
 			</exclusions>
-		</dependency> 
+		</dependency>
+		<dependency>
+			<groupId>org.apache.jena</groupId>
+			<artifactId>jena-core</artifactId>
+			<version>3.6.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.jena</groupId>
+			<artifactId>jena-core</artifactId>
+			<version>3.6.0</version>
+		</dependency>
 	</dependencies>
 
 	<build>

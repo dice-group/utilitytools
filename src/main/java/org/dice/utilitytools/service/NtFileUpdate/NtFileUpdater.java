@@ -31,7 +31,7 @@ public class NtFileUpdater {
     super();
   }
 
-  public void Update(String fileName, String verbalizedFileForReplace, boolean isTraining) {
+  public void update(String fileName, String verbalizedFileForReplace, boolean isTraining) {
     try {
       System.out.println("fileName is :" + fileName);
       System.out.println("verbalizedFileForReplace is :" + verbalizedFileForReplace);
