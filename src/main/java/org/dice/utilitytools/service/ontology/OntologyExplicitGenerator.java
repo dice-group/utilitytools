@@ -1,20 +1,31 @@
 package org.dice.utilitytools.service.ontology;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.apache.jena.graph.NodeFactory;
-import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.ResultSet;
+import org.apache.http.HttpHeaders;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.util.EntityUtils;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.conn.ConnectionPoolTimeoutException;
+import org.springframework.stereotype.Component;
+
+import java.net.SocketTimeoutException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 import java.util.*;
 
-//
+@Component
 public class OntologyExplicitGenerator {
     Map<String, ArrayList<String>> mapOfParents;
-    private QueryExecutionFactory executioner;
+    private HttpClient client;
+    String service = "https://dbpedia.org/sparql?query=";
 
-    public OntologyExplicitGenerator(QueryExecutionFactory executioner) {
-        this.executioner = executioner;
+    public OntologyExplicitGenerator() {
+        HttpClientBuilder builder = HttpClientBuilder.create();
+        client = builder.build();
     }
 
     // get list of ontology , for each return all parents and super classes
@@ -32,34 +43,38 @@ public class OntologyExplicitGenerator {
 
     private ArrayList<String> calcParentsFor(String item, Set<String> visitedParents) {
         // get parent for this item
-        String parentClass = getParentClass(item);
+        Set<String> parents = (Set<String>)getParentClass(item);
 
         ArrayList<String> newArrayToAddInResult = new ArrayList<>();
 
-        if(parentClass.equals("")) return newArrayToAddInResult;
+        if(parents.size() == 0) return newArrayToAddInResult;
 
         // stop getting stuck in the loop
-        if(visitedParents.contains(parentClass)) return newArrayToAddInResult;
+        //if(visitedParents.contains(parentClass)) return newArrayToAddInResult;
 
-        newArrayToAddInResult.add(parentClass);
-        //if the parent class exist in the return map just add parent to list of ancestors ans add to map
-        if(mapOfParents.containsKey(parentClass)){
-            // copy other parent class from map
-            for(String superClass:mapOfParents.get(parentClass)){
-                newArrayToAddInResult.add(superClass);
-            }
-        }else {
-            // while reach end or find a parent class which we has
-            visitedParents.add(parentClass);
-            ArrayList<String> parents = calcParentsFor(parentClass, visitedParents);
-            for(String superClass:parents){
-                newArrayToAddInResult.add(superClass);
+        for(String parent : parents){
+            newArrayToAddInResult.add(parent);
+            //if the parent class exist in the return map just add parent to list of ancestors ans add to map
+            if(mapOfParents.containsKey(parent)){
+                // copy other parent class from map
+                for(String superClass:mapOfParents.get(parent)){
+                    newArrayToAddInResult.add(superClass);
+                }
+            }else {
+                // while reach end or find a parent class which we has
+                visitedParents.add(parent);
+                ArrayList<String> tempParents = calcParentsFor(parent, visitedParents);
+                for(String superClass:parents){
+                    newArrayToAddInResult.add(superClass);
+                }
+                visitedParents.remove(parent);
             }
         }
+
         return newArrayToAddInResult;
     }
 
-    private String getParentClass(String item) {
+    private Collection<String> getParentClass(String item) {
         // run query like this
         // select distinct ?o where {<item> <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?o } LIMIT 100
 
@@ -67,14 +82,39 @@ public class OntologyExplicitGenerator {
         selectBuilder.append("select distinct ?o where { <");
         selectBuilder.append(item);
         selectBuilder.append("> <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?o } LIMIT 100");
+        Set<String> results = new HashSet<>();
+        
+        
+        String result = runQuery(selectBuilder.toString());
+        
+        
+        return results;
+    }
 
-        try (QueryExecution queryExecution = executioner.createQueryExecution(selectBuilder.toString())) {
-            ResultSet resultSet = queryExecution.execSelect();
-            while (resultSet.hasNext()) {
-                String parent  = resultSet.next().get("o").asResource().getURI();
-                return parent;
+    private String runQuery(String query) {
+        HttpResponse response = null;
+        try {
+            HttpGet get = new HttpGet(service  + URLEncoder.encode(query, "UTF-8"));
+            //get.addHeader(HttpHeaders.ACCEPT, "application/sparql-results+xml");
+            get.addHeader(HttpHeaders.ACCEPT, "application/turtle");
+            response = client.execute(get);
+            String result = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
+            return result;
+        }
+        catch(SocketTimeoutException e) {
+            return "";
+        }
+        catch(ConnectionPoolTimeoutException e) {
+            return "";
+        }
+        catch(Exception e){
+            throw new RuntimeException("There is an error while running the query",e);
+        }finally {
+            // If we received a response, we need to ensure that its entity is consumed correctly to free
+            // all resources
+            if (response != null) {
+                EntityUtils.consumeQuietly(response.getEntity());
             }
         }
-        return "";
     }
 }
