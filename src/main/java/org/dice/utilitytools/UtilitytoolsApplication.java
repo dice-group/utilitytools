@@ -1,7 +1,9 @@
 package org.dice.utilitytools;
 
 import java.io.File;
+
 import org.dice.utilitytools.service.NtFileUpdate.NtFileUpdater;
+import org.dice.utilitytools.service.ontology.OntologyNtFileUpdater;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -11,6 +13,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class UtilitytoolsApplication implements CommandLineRunner {
 
   @Autowired NtFileUpdater service;
+  @Autowired
+  OntologyNtFileUpdater ontologyNtFileUpdaterService;
 
   public static void main(String[] args) {
     SpringApplication.run(UtilitytoolsApplication.class, args);
@@ -32,6 +36,8 @@ public class UtilitytoolsApplication implements CommandLineRunner {
       System.out.println("\t \t up [file for update] [verbalizedFileForReplace] [optional t : it is training file]");
       System.out.println("2 . use 'eo' for explicit ontology");
       System.out.println("\t \t eo [ontology file] [verbalizedFileForReplace] [optional t : it is training file]");
+      System.out.println("2 . use 'euf' for explicit update file");
+      System.out.println("\t \t ls ./ta");
     }
 
     // update file
@@ -77,7 +83,21 @@ public class UtilitytoolsApplication implements CommandLineRunner {
     }
 
     if(args.length > 1 && args[0].equals("eo")){
+    }
 
+    if(args.length > 1 && args[0].equals("euf")){
+      if(args.length == 4){
+        String ntFile = args[1];
+        String mapFile = args[2];
+        String saveFileHere = args[3];
+    try {
+    ontologyNtFileUpdaterService.update(ntFile, mapFile, saveFileHere);
+    }catch (Exception ex){
+
+    }
+      }else{
+        System.out.println("args are not correct we need 4 here");
+      }
     }
   }
 }
