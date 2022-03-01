@@ -40,3 +40,4 @@ build/
 !test.nt
 !test.tsv
 !training.tsv
+*.report

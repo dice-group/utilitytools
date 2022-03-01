@@ -17,6 +17,19 @@ public class OntologyNtFileUpdater {
         map = (Map<String, ArrayList<String>>) in.readObject();
         in.close();
 
+        FileWriter write = new FileWriter("map.report");
+        for(Map.Entry<String, ArrayList<String>> entry : map.entrySet()){
+            StringBuilder items = new StringBuilder();
+            for(int i = 0 ; i < entry.getValue().size() ; i++){
+                items.append(entry.getValue().get(i));
+                if(i+1<entry.getValue().size())
+                    items.append(",");
+            }
+
+            write.write(entry.getKey()+":["+items.toString()+"]\n");
+        }
+        write.close();
+
 
         long lineCounter = 0;
         try (BufferedReader br =

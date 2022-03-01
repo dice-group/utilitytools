@@ -13,13 +13,8 @@ import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
-import org.apache.lucene.util.QueryBuilder;
 import org.dice.utilitytools.service.Query.QueryExecutioner;
 import org.springframework.stereotype.Component;
-
-import java.net.SocketTimeoutException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 
 import java.util.*;
 
