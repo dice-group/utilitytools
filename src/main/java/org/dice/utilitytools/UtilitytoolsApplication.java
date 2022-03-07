@@ -5,10 +5,11 @@ import java.io.IOException;
 import java.util.List;
 
 import org.dice.utilitytools.service.NtFileUpdate.NtFileUpdater;
+import org.dice.utilitytools.service.filter.CommonRDFFilter;
 import org.dice.utilitytools.service.load.IOService;
 import org.dice.utilitytools.service.ontology.OntologyNtFileUpdater;
 import org.dice.utilitytools.service.spliter.BasedDateSpliter;
-import org.dice.utilitytools.service.transform.NTTransformer;
+import org.dice.utilitytools.service.transform.Transformer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -25,9 +26,10 @@ public class UtilitytoolsApplication implements CommandLineRunner {
   BasedDateSpliter spliterService;
   @Autowired
   IOService ioService;
-
   @Autowired
-  NTTransformer ntTransformer;
+  Transformer transformer;
+  @Autowired
+  CommonRDFFilter commonRDFFilter;
 
   public static void main(String[] args) {
     SpringApplication.run(UtilitytoolsApplication.class, args);
@@ -55,6 +57,8 @@ public class UtilitytoolsApplication implements CommandLineRunner {
       System.out.println("4 . use 'gntwsp' for Generate NT file With Specific Predicate (out put of the 3. functionality)");
       System.out.println("\t \t gntwsp [the file] [c for comma t for tab separated file] [the predicate to add] [path for save result (full path with name)]");
 
+      System.out.println("5 . use 'cdtf' accept two .nt file , before and after , save the triples on the after file which both their subject and objects are exist in the before file in the result file");
+      System.out.println("\t \t cdtf [beforeFile] [afterFile] [c for comma t for tab separated file s for space] [path for save result with file name]");
       return ;
     }
 
@@ -153,10 +157,37 @@ public class UtilitytoolsApplication implements CommandLineRunner {
           separetor = ",";
         }
 
-        List<String> converted = ntTransformer.transformAndAddPredicate(file, separetor, args[3]);
+        List<String> converted = transformer.transformAndAddPredicate(file, separetor, args[3]);
 
         ioService.writeListAsFile(converted ,args[4]);
     }
+
+
+    // functionality 5
+      if (args.length == 5 && args[0].equals("cdtf")){
+        String beforeFile = args[1];
+        String afterFile = args[2];
+
+        String separetor;
+          if(args[3].equals("t")){
+              separetor = "\t";
+          }else{
+              if(args[3].equals("c")){
+                  separetor = ",";
+              }else
+              {
+                  separetor = " ";
+              }
+          }
+
+        String savePath = args[4];
+        List<String> theFilteredResult =commonRDFFilter.filterNotCommonSubjectAndaObject(
+                transformer.transformToList(ioService.readFile(beforeFile)),
+                transformer.transformToList(ioService.readFile(afterFile)),
+                separetor);
+
+        ioService.writeListAsFile(theFilteredResult, savePath);
+      }
 
       System.out.println("Finish");
   }
