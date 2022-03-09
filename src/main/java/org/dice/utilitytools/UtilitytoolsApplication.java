@@ -9,6 +9,7 @@ import org.dice.utilitytools.service.filter.CommonRDFFilter;
 import org.dice.utilitytools.service.load.IOService;
 import org.dice.utilitytools.service.ontology.OntologyNtFileUpdater;
 import org.dice.utilitytools.service.spliter.BasedDateSpliter;
+import org.dice.utilitytools.service.transform.NegativeSampleTransformer;
 import org.dice.utilitytools.service.transform.Transformer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -30,6 +31,8 @@ public class UtilitytoolsApplication implements CommandLineRunner {
   Transformer transformer;
   @Autowired
   CommonRDFFilter commonRDFFilter;
+  @Autowired
+  NegativeSampleTransformer negativeSampleTransformer;
 
   public static void main(String[] args) {
     SpringApplication.run(UtilitytoolsApplication.class, args);
@@ -59,6 +62,9 @@ public class UtilitytoolsApplication implements CommandLineRunner {
 
       System.out.println("5 . use 'cdtf' accept two .nt file , before and after , save the triples on the after file which both their subject and objects are exist in the before file in the result file");
       System.out.println("\t \t cdtf [beforeFile] [afterFile] [c for comma t for tab separated file s for space] [path for save result with file name]");
+
+      System.out.println("6 . use 'gff' generate the false fact from true facts file ");
+      System.out.println("\t \t gff [trueFile] [c for comma t for tab separated file s for space] [path for save result with file name]");
       return ;
     }
 
@@ -187,6 +193,34 @@ public class UtilitytoolsApplication implements CommandLineRunner {
                 separetor);
 
         ioService.writeListAsFile(theFilteredResult, savePath);
+      }
+
+      // functionality 6
+      if (args.length == 4 && args[0].equals("gff")){
+          String trueFile = args[1];
+
+          System.out.println("start generating false facts");
+          String separetor;
+          if(args[2].equals("t")){
+              separetor = "\t";
+          }else{
+              if(args[3].equals("c")){
+                  separetor = ",";
+              }else
+              {
+                  separetor = " ";
+              }
+          }
+
+          String savePath = args[3];
+
+          List<String> theGeneratedFalseFacts =negativeSampleTransformer.generate(
+                  transformer.transformToList(ioService.readFile(trueFile)),
+                  separetor);
+          System.out.println(theGeneratedFalseFacts.size() + "false facts are generated will be save " + savePath);
+
+
+          ioService.writeListAsFile(theGeneratedFalseFacts, savePath);
       }
 
       System.out.println("Finish");

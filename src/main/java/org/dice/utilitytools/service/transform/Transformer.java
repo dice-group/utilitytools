@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-// this cllas transform a file
+// this class transform a file
 
 @Component
 public class Transformer {

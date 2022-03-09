@@ -16,6 +16,7 @@ public class IOService {
             fw.write("\n");
         }
         fw.close();
+        System.out.println("the writing of a file is done ");
     }
 
     public File readFile(String path){
