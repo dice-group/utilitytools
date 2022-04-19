@@ -39,8 +39,11 @@ public class NtFileUpdater {
       model.build(fileName);
       processedModel = processor.ProcessModel(model.getModel());
       resultMap = extractor.ExtractResult(processedModel, fileName, isTraining);
-      if (verbalizedFileForReplace != "") {
+      if (verbalizedFileForReplace.length() > 5) {
+        System.out.println("do with verbalization");
         patcher.patch(verbalizedFileForReplace, resultMap, processedModel.getShouldRemoveKeys());
+      }else{
+        System.out.println("No verbalization");
       }
 
     } catch (Exception exp) {

@@ -15,7 +15,7 @@ public class ModelBuilder {
     model = ModelFactory.createDefaultModel();
     model.read(
         // getClass().getResourceAsStream("/org/dice/utilitytools/NtfileUpdate/" + fileName),
-        new FileInputStream("./" + fileName), "", "N-TRIPLE");
+        new FileInputStream( fileName), "", "N-TRIPLE");
     System.out.println("Model built");
   }
 

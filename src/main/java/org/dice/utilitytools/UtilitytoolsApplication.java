@@ -49,7 +49,7 @@ public class UtilitytoolsApplication implements CommandLineRunner {
     if (args.length ==  1 && args[0].equals("h")){
       System.out.println("this is help");
       System.out.println("1 . use 'up' for update the file ");
-      System.out.println("\t \t up [file for update] [verbalizedFileForReplace] [optional t : it is training file]");
+      System.out.println("\t \t up [file for update] [verbalizedFileForReplace ] [t it is training file, nt it is ]");
 
       System.out.println("2 . use 'euf' for explicit update file");
       System.out.println("\t \t euf [ntFile] [mapFile] [path for save result ]");
@@ -77,7 +77,7 @@ public class UtilitytoolsApplication implements CommandLineRunner {
 
     // update file
     // functionality 1
-    if(args.length == 4 && args[0].equals("up") ){
+    if(args[0].equals("up") ){
       //TODO : rearrange the args
       File f = new File(args[1]);
       if (!f.exists()) {
@@ -95,27 +95,11 @@ public class UtilitytoolsApplication implements CommandLineRunner {
         return;
       }
 
-      if (args.length == 3) {
-        if (args[2].toLowerCase().equals("t")) {
-          service.update(args[1], "", true);
-        } else {
-          service.update(args[1], args[2], false);
-        }
-      }
-
-      if (args.length == 4) {
         boolean isTraining = false;
         if (args[3].toLowerCase().equals("t")) {
           isTraining = true;
         }
         service.update(args[1], args[2], isTraining);
-      }
-
-      if (args.length == 2 || args.length == 3) {
-        System.out.println(" Job Done");
-      } else {
-        System.out.println(" wrong parameters!");
-      }
     }
 
     // functionality 2

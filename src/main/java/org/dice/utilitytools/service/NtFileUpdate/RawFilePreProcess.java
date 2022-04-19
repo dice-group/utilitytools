@@ -20,8 +20,8 @@ public class RawFilePreProcess {
     String PreProccessedFileName =
         fileNameParts[0] + "_RawPreProcess_" + dtf.format(now) + "." + fileNameParts[1];
     try (BufferedReader br =
-            new BufferedReader(new InputStreamReader(new FileInputStream("./" + fileName)));
-        FileWriter fw = new FileWriter("./" + PreProccessedFileName)) {
+            new BufferedReader(new InputStreamReader(new FileInputStream( fileName)));
+        FileWriter fw = new FileWriter( PreProccessedFileName)) {
       String st;
       // https://www.utf8-chartable.de/
       while ((st = br.readLine()) != null) {
@@ -31,6 +31,7 @@ public class RawFilePreProcess {
       System.out.println("Raw file Preprocessed...");
     } catch (IOException e) {
       // TODO Auto-generated catch block
+      System.out.println("ERROR" + e.getMessage());
       e.printStackTrace();
     }
 
