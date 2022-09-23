@@ -1,60 +1,69 @@
 package org.dice.utilitytools.Model;
 
 public class RDFProcessEntity {
-  private String Subject;
-  private String Predicate;
-  private String Object;
-  private String PreviusObject;
-  private String Type;
-  private Boolean HasTruthValue;
-  private int RedyForProcess;
-  private Boolean IsProcessed;
-  private Boolean AfterProcessResultIsAcceptable;
-  private Boolean DoesItChange;
+  private String subject;
+  private String predicate;
+  private String previousPredicate;
+  private String object;
+  private String previousObject;
+  private String type;
+  private Boolean hasTruthValue;
+  private int readyForProcess;
+  private Boolean isProcessed;
+  private Boolean afterProcessResultIsAcceptable;
+  private Boolean doesItChange;
+  private Boolean doesThePredicateChange;
 
   public RDFProcessEntity() {
-    this.IsProcessed = false;
-    this.AfterProcessResultIsAcceptable = false;
-    this.RedyForProcess = 0;
-    this.DoesItChange = false;
-    this.PreviusObject = "";
+    this.isProcessed = false;
+    this.afterProcessResultIsAcceptable = false;
+    this.readyForProcess = 0;
+    this.doesItChange = false;
+    this.previousObject = "";
+    this.doesThePredicateChange = false;
+
   }
 
   public String getSubject() {
-    return Subject;
+    return subject;
   }
 
   public void AddStep() {
-    this.RedyForProcess += 1;
+    this.readyForProcess += 1;
   }
 
   public void setSubject(String subject) {
-    Subject = subject;
+    this.subject = subject;
   }
 
   public String getPredicate() {
-    return Predicate;
+    return predicate;
   }
 
   public void setPredicate(String predicate) {
-    Predicate = predicate;
+    this.previousPredicate = this.predicate;
+    this.predicate = predicate;
+  }
+
+  public String getPreviousPredicate() {
+    return previousPredicate;
   }
 
   public String getObject() {
-    return Object;
+    return object;
   }
 
   public void setObject(String object) {
-    this.PreviusObject = this.Object;
-    Object = object;
+    this.previousObject = this.object;
+    this.object = object;
   }
 
   public Boolean getHasTruthValue() {
-    return HasTruthValue;
+    return hasTruthValue;
   }
 
   public String getStringFormHasTruthValue() {
-    if (HasTruthValue) {
+    if (hasTruthValue) {
       return "1.0";
     } else {
       return "0.0";
@@ -62,107 +71,136 @@ public class RDFProcessEntity {
   }
 
   public void setHasTruthValue(Boolean hasTruthValue) {
-    HasTruthValue = hasTruthValue;
+    this.hasTruthValue = hasTruthValue;
   }
 
-  public int getRedyForProcess() {
-    return RedyForProcess;
+  public int getReadyForProcess() {
+    return readyForProcess;
   }
 
-  public void setRedyForProcess(int redyForProcess) {
-    RedyForProcess = redyForProcess;
+  public void setReadyForProcess(int readyForProcess) {
+    this.readyForProcess = readyForProcess;
   }
 
   public Boolean getIsProcessed() {
-    return IsProcessed;
+    return isProcessed;
   }
 
   public void setIsProcessed(Boolean isProcessed) {
-    IsProcessed = isProcessed;
+    this.isProcessed = isProcessed;
   }
 
   public Boolean getAfterProcessResultIsAcceptable() {
-    return AfterProcessResultIsAcceptable;
+    return afterProcessResultIsAcceptable;
   }
 
   public void setAfterProcessResultIsAcceptable(Boolean afterProcessResultIsAcceptable) {
-    AfterProcessResultIsAcceptable = afterProcessResultIsAcceptable;
+    this.afterProcessResultIsAcceptable = afterProcessResultIsAcceptable;
   }
 
   public Boolean getDoesItChange() {
-    return DoesItChange;
+    return doesItChange;
   }
 
   public void setDoesItChange(Boolean doesItChange) {
-    DoesItChange = doesItChange;
+    this.doesItChange = doesItChange;
   }
 
-  public String getPreviusObject() {
-    return PreviusObject;
+  public String getPreviousObject() {
+    return previousObject;
   }
 
   public String getType() {
-    return Type;
+    return type;
   }
 
   public void setType(String type) {
-    Type = type;
+    this.type = type;
+  }
+
+  public Boolean getDoesThePredicateChange() {
+    return doesThePredicateChange;
+  }
+
+  public void setDoesThePredicateChange(Boolean doesThePredicateChange) {
+    this.doesThePredicateChange = doesThePredicateChange;
+  }
+
+  public void switchObjectAndSubject() {
+    String temp  = subject;
+    subject = object;
+    object = temp;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    RDFProcessEntity that = (RDFProcessEntity) o;
+
+    if (getReadyForProcess() != that.getReadyForProcess()) return false;
+    if (getSubject() != null ? !getSubject().equals(that.getSubject()) : that.getSubject() != null) return false;
+    if (getPredicate() != null ? !getPredicate().equals(that.getPredicate()) : that.getPredicate() != null)
+      return false;
+    if (getObject() != null ? !getObject().equals(that.getObject()) : that.getObject() != null) return false;
+    if (getPreviousObject() != null ? !getPreviousObject().equals(that.getPreviousObject()) : that.getPreviousObject() != null)
+      return false;
+    if (getType() != null ? !getType().equals(that.getType()) : that.getType() != null) return false;
+    if (getHasTruthValue() != null ? !getHasTruthValue().equals(that.getHasTruthValue()) : that.getHasTruthValue() != null)
+      return false;
+    if (getIsProcessed() != null ? !getIsProcessed().equals(that.getIsProcessed()) : that.getIsProcessed() != null)
+      return false;
+    if (getAfterProcessResultIsAcceptable() != null ? !getAfterProcessResultIsAcceptable().equals(that.getAfterProcessResultIsAcceptable()) : that.getAfterProcessResultIsAcceptable() != null)
+      return false;
+    if (getDoesItChange() != null ? !getDoesItChange().equals(that.getDoesItChange()) : that.getDoesItChange() != null)
+      return false;
+    return getDoesThePredicateChange() != null ? getDoesThePredicateChange().equals(that.getDoesThePredicateChange()) : that.getDoesThePredicateChange() == null;
   }
 
   @Override
   public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + ((HasTruthValue == null) ? 0 : HasTruthValue.hashCode());
-    result = prime * result + ((IsProcessed == null) ? 0 : IsProcessed.hashCode());
-    result = prime * result + ((Object == null) ? 0 : Object.hashCode());
-    result = prime * result + ((Predicate == null) ? 0 : Predicate.hashCode());
-    result = prime * result + RedyForProcess;
-    result = prime * result + ((Subject == null) ? 0 : Subject.hashCode());
+    int result = getSubject() != null ? getSubject().hashCode() : 0;
+    result = 31 * result + (getPredicate() != null ? getPredicate().hashCode() : 0);
+    result = 31 * result + (getObject() != null ? getObject().hashCode() : 0);
+    result = 31 * result + (getPreviousObject() != null ? getPreviousObject().hashCode() : 0);
+    result = 31 * result + (getType() != null ? getType().hashCode() : 0);
+    result = 31 * result + (getHasTruthValue() != null ? getHasTruthValue().hashCode() : 0);
+    result = 31 * result + getReadyForProcess();
+    result = 31 * result + (getIsProcessed() != null ? getIsProcessed().hashCode() : 0);
+    result = 31 * result + (getAfterProcessResultIsAcceptable() != null ? getAfterProcessResultIsAcceptable().hashCode() : 0);
+    result = 31 * result + (getDoesItChange() != null ? getDoesItChange().hashCode() : 0);
+    result = 31 * result + (getDoesThePredicateChange() != null ? getDoesThePredicateChange().hashCode() : 0);
     return result;
   }
 
   @Override
-  public boolean equals(java.lang.Object obj) {
-    if (this == obj) return true;
-    if (obj == null) return false;
-    if (getClass() != obj.getClass()) return false;
-    RDFProcessEntity other = (RDFProcessEntity) obj;
-    if (HasTruthValue == null) {
-      if (other.HasTruthValue != null) return false;
-    } else if (!HasTruthValue.equals(other.HasTruthValue)) return false;
-    if (IsProcessed == null) {
-      if (other.IsProcessed != null) return false;
-    } else if (!IsProcessed.equals(other.IsProcessed)) return false;
-    if (Object == null) {
-      if (other.Object != null) return false;
-    } else if (!Object.equals(other.Object)) return false;
-    if (Predicate == null) {
-      if (other.Predicate != null) return false;
-    } else if (!Predicate.equals(other.Predicate)) return false;
-    if (RedyForProcess != other.RedyForProcess) return false;
-    if (Subject == null) {
-      if (other.Subject != null) return false;
-    } else if (!Subject.equals(other.Subject)) return false;
-    return true;
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("RDFProcessEntity [Subject=");
+    sb.append(subject);
+    sb.append(", Predicate=");
+    sb.append(predicate);
+    sb.append(", Object=");
+    sb.append(object);
+    sb.append(", previusObject");
+    sb.append(previousObject);
+    sb.append(", HasTruthValue=");
+    sb.append(hasTruthValue);
+    sb.append(", RedyForProcess=");
+    sb.append(readyForProcess);
+    sb.append(", IsProcessed=");
+    sb.append(isProcessed);
+    sb.append(", AfterProcessResultIsAcceptable=");
+    sb.append(afterProcessResultIsAcceptable);
+    sb.append(", doesThePredicateChange=");
+    sb.append(doesThePredicateChange);
+    sb.append(", getPreviousPredicate=");
+    sb.append(previousPredicate);
+    sb.append("]");
+
+    return sb.toString();
   }
 
-  @Override
-  public String toString() {
-    return "RDFProcessEntity [Subject="
-        + Subject
-        + ", Predicate="
-        + Predicate
-        + ", Object="
-        + Object
-        + ", HasTruthValue="
-        + HasTruthValue
-        + ", RedyForProcess="
-        + RedyForProcess
-        + ", IsProcessed="
-        + IsProcessed
-        + ", AfterProcessResultIsAcceptable="
-        + AfterProcessResultIsAcceptable
-        + "]";
-  }
+
 }

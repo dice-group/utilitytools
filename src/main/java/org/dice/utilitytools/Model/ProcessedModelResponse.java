@@ -60,4 +60,8 @@ public class ProcessedModelResponse {
   public Boolean IsKeyExistForRemove(String key) {
     return this.shouldRemoveKeys.contains(key);
   }
+
+  public String sizeReport(){
+    return "intendedStatements size :"+intendedStatements.size() +" unIntendedStatements size: "+unIntendedStatements.size()+" shouldRemoveKeys size: "+ shouldRemoveKeys.size();
+  }
 }

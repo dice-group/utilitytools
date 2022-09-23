@@ -3,6 +3,7 @@ package org.dice.utilitytools;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.dice.utilitytools.service.NtFileUpdate.NtFileUpdater;
 import org.dice.utilitytools.service.filter.CommonRDFFilter;
@@ -10,6 +11,8 @@ import org.dice.utilitytools.service.load.IOService;
 import org.dice.utilitytools.service.ontology.OntologyNtFileUpdater;
 import org.dice.utilitytools.service.spliter.BasedDateSpliter;
 import org.dice.utilitytools.service.transform.NegativeSampleTransformer;
+import org.dice.utilitytools.service.transform.RDFModelTransform;
+import org.dice.utilitytools.service.transform.TTLtoSimpleRDFTransform;
 import org.dice.utilitytools.service.transform.Transformer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -21,18 +24,30 @@ public class UtilitytoolsApplication implements CommandLineRunner {
 
   @Autowired
   NtFileUpdater service;
+
   @Autowired
   OntologyNtFileUpdater ontologyNtFileUpdaterService;
+
   @Autowired
   BasedDateSpliter spliterService;
+
   @Autowired
   IOService ioService;
+
   @Autowired
   Transformer transformer;
+
   @Autowired
   CommonRDFFilter commonRDFFilter;
+
   @Autowired
   NegativeSampleTransformer negativeSampleTransformer;
+
+  @Autowired
+  RDFModelTransform rdfModelTransformer;
+
+  @Autowired
+  TTLtoSimpleRDFTransform tTLtoSimpleRDFTransform;
 
   public static void main(String[] args) {
     SpringApplication.run(UtilitytoolsApplication.class, args);
@@ -65,6 +80,13 @@ public class UtilitytoolsApplication implements CommandLineRunner {
 
       System.out.println("6 . use 'gff' generate the false fact from true facts file ");
       System.out.println("\t \t gff [trueFile] [c for comma t for tab separated file s for space] [path for save result with file name]");
+
+      System.out.println("7 . use 'gffRDF' generate the false fact from true facts file , input file is a model like turtle or ...");
+      System.out.println("\t \t gffRDF [trueFile] [c for comma t for tab separated file s for space] [path for save result with file name]");
+
+      System.out.println("8 . use 'cso' to change the subject and an object for a predicate");
+      System.out.println("\t \t cso [File] [predicate]");
+
       return ;
     }
 
@@ -97,6 +119,7 @@ public class UtilitytoolsApplication implements CommandLineRunner {
 
         boolean isTraining = false;
         if (args[3].toLowerCase().equals("t")) {
+            System.out.println("it is a training file");
           isTraining = true;
         }
         service.update(args[1], args[2], isTraining);
@@ -130,8 +153,8 @@ public class UtilitytoolsApplication implements CommandLineRunner {
           args[3] = args[3] + "/";
         }
 
-        ioService.writeListAsFile(bef ,args[3]+"before.out");
-        ioService.writeListAsFile(aft ,args[3]+"after.out");
+        ioService.writeListAsFile(bef ,args[3]+"before.out",false);
+        ioService.writeListAsFile(aft ,args[3]+"after.out",false);
     }
 
     // functionality 4
@@ -149,7 +172,7 @@ public class UtilitytoolsApplication implements CommandLineRunner {
 
         List<String> converted = transformer.transformAndAddPredicate(file, separetor, args[3]);
 
-        ioService.writeListAsFile(converted ,args[4]);
+        ioService.writeListAsFile(converted ,args[4], false);
     }
 
 
@@ -176,7 +199,7 @@ public class UtilitytoolsApplication implements CommandLineRunner {
                 transformer.transformToList(ioService.readFile(afterFile)),
                 separetor);
 
-        ioService.writeListAsFile(theFilteredResult, savePath);
+        ioService.writeListAsFile(theFilteredResult, savePath,false);
       }
 
       // functionality 6
@@ -204,7 +227,62 @@ public class UtilitytoolsApplication implements CommandLineRunner {
           System.out.println(theGeneratedFalseFacts.size() + "false facts are generated will be save " + savePath);
 
 
-          ioService.writeListAsFile(theGeneratedFalseFacts, savePath);
+          ioService.writeListAsFile(theGeneratedFalseFacts, savePath, false);
+      }
+
+      // functionality 7
+      if (args.length == 4 && args[0].equals("gffRDF")){
+          String trueFile = args[1];
+
+          System.out.println("start generating false facts");
+          String separetor;
+          if(args[2].equals("t")){
+              separetor = "\t";
+          }else{
+              if(args[3].equals("c")){
+                  separetor = ",";
+              }else
+              {
+                  separetor = " ";
+              }
+          }
+
+          String savePath = args[3];
+
+          List<String> theGeneratedFalseFacts =negativeSampleTransformer.runQueryOverDBpedia(
+                  tTLtoSimpleRDFTransform.transform(rdfModelTransformer.transform(ioService.readFile(trueFile),""),"").stream().map(t -> t.toString()).collect(Collectors.toList()), " ",0,10000);
+
+          System.out.println(theGeneratedFalseFacts.size() + "false facts are generated will be save " + savePath);
+
+
+          ioService.writeListAsFile(theGeneratedFalseFacts, savePath, true);
+      }
+
+      //F functionality 8 cso
+      // change subject and object for predicate
+
+      if (args.length == 3 && args[0].equals("cso")){
+          String filePath = args[1];
+
+          File f = new File(filePath);
+          if (!f.exists()) {
+              System.out.println("no file exist");
+              return;
+          }
+
+          if (!f.isFile()) {
+              System.out.println(filePath + " is not a file");
+              return;
+          }
+
+          if (!f.canRead()) {
+              System.out.println(filePath + " is not readable");
+              return;
+          }
+
+          String predicate = args[2];
+
+          service.switchSubjectAndObjectForAPredicate(filePath, predicate);
       }
 
       System.out.println("Finish");

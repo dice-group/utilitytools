@@ -1,15 +1,10 @@
 package org.dice.utilitytools.service.ontology;
 
-import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.apache.http.HttpHeaders;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.util.EntityUtils;
 
-import org.apache.http.HttpResponse;
+
 import org.apache.http.client.HttpClient;
-import org.apache.http.conn.ConnectionPoolTimeoutException;
-import org.apache.jena.query.Query;
+
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
@@ -99,7 +94,8 @@ public class OntologyExplicitGenerator {
     private Collection<String> runQuery(String query) {
         System.out.println(query);
         Set<String> results = new HashSet<>();
-        QueryExecutioner queryExecutioner = new QueryExecutioner(service);
+        //QueryExecutioner queryExecutioner = new QueryExecutioner(service);
+        QueryExecutioner queryExecutioner = new QueryExecutioner();
         try (QueryExecution queryExecution = queryExecutioner.getQueryExecution(query)) {
             ResultSet resultSet = queryExecution.execSelect();
             while (resultSet.hasNext()) {

@@ -9,8 +9,8 @@ import java.util.List;
 
 @Component
 public class IOService {
-    public void writeListAsFile(List<String> input, String path) throws IOException {
-        FileWriter fw = new FileWriter(path, false); //the true will append the new data
+    public void writeListAsFile(List<String> input, String path,boolean append) throws IOException {
+        FileWriter fw = new FileWriter(path, append); //the true will append the new data
         for(String s : input){
             fw.write(s);
             fw.write("\n");

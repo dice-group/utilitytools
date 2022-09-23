@@ -35,9 +35,13 @@ public class NtFileUpdater {
     try {
       System.out.println("fileName is :" + fileName);
       System.out.println("verbalizedFileForReplace is :" + verbalizedFileForReplace);
-      fileName = preProcessor.Process(fileName);
+      // update some characters in a file
+      fileName = preProcessor.Process(fileName,"updateFile");
+      // made a model
       model.build(fileName);
-      processedModel = processor.ProcessModel(model.getModel());
+
+      processedModel = processor.ProcessModelAndUpdate(model.getModel());
+
       resultMap = extractor.ExtractResult(processedModel, fileName, isTraining);
       if (verbalizedFileForReplace.length() > 5) {
         System.out.println("do with verbalization");
@@ -46,6 +50,21 @@ public class NtFileUpdater {
         System.out.println("No verbalization");
       }
 
+      System.out.println(processedModel.sizeReport());
+    } catch (Exception exp) {
+      String kkk = exp.getMessage();
+      System.out.println(kkk);
+    }
+  }
+
+  public void switchSubjectAndObjectForAPredicate(String fileName,String predicate){
+    try {
+      System.out.println("fileName is :" + fileName);
+      System.out.println("predicate is :" + predicate);
+      fileName = preProcessor.Process(fileName,"switchSubjectObjectFor("+predicate+")");
+      model.build(fileName);
+      processedModel = processor.ProcessModelAndSwitchSubjectAndObjectForPredicate(model.getModel(), predicate);
+      extractor.ExtractResult(processedModel, fileName, false);
     } catch (Exception exp) {
       String kkk = exp.getMessage();
       System.out.println(kkk);

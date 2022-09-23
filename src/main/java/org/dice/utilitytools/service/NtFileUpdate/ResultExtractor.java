@@ -34,7 +34,7 @@ public class ResultExtractor {
       ProcessedModelResponse proccessedModel, String fileName, boolean isTrainingData)
       throws IOException {
 
-    System.out.println("Start Extract result");
+    System.out.println("Start Extract result and training is "+isTrainingData );
 
     HashMap<String, String> resultMap = new HashMap<String, String>();
 
@@ -44,6 +44,8 @@ public class ResultExtractor {
         new FileWriter(fileNameParts[0].replace("RawPreProcess", "ResultText") + ".tsv");
     FileWriter fwReport =
         new FileWriter(fileNameParts[0].replace("RawPreProcess", "ResultTextReport") + ".txt");
+    FileWriter fwReportChangedPredicates =
+            new FileWriter(fileNameParts[0].replace("RawPreProcess", "ResultTextReportForChangedPredicates") + ".txt");
 
     FileWriter fwNt = new FileWriter(fileNameParts[0].replace("RawPreProcess", "New") + ".nt");
 
@@ -57,6 +59,8 @@ public class ResultExtractor {
         if (proccessedModel.IsKeyExistForRemove(entry.getKey())) {
           continue;
         }
+        if(entry.getValue().getAfterProcessResultIsAcceptable()){
+        GenerateChangedPredicateReport(fwReportChangedPredicates, entry);
         GenerateNtFile(fwNt, entry);
         if (entry.getValue().getDoesItChange()) {
           GenerateReport(fwReport, entry);
@@ -69,6 +73,9 @@ public class ResultExtractor {
             resultMap.put(entry.getKey(), verbalizedStatement);
           }
           fw.append(entry.getKey() + " " + verbalizedStatement + "\n");
+         }
+        }else{
+          GenerateReport(fwReport, entry);
         }
       } catch (Exception e) {
         logger.error(e.getMessage());
@@ -86,8 +93,25 @@ public class ResultExtractor {
     }
 
     fwNt.close();
+    fwReportChangedPredicates.close();
     System.out.println("Changes are ready");
     return resultMap;
+  }
+
+  private void GenerateChangedPredicateReport(FileWriter fwReportChangedPredicates, Entry<String, RDFProcessEntity> entry) throws IOException {
+    if(entry.getValue().getDoesThePredicateChange()) {
+      fwReportChangedPredicates.append(
+              entry.getKey().toString()
+                      + " "
+                      + entry.getValue().getSubject()
+                      + " "
+                      + entry.getValue().getPredicate()
+                      + " "
+                      + entry.getValue().getObject()
+                      + " previous predicate :"
+                      + entry.getValue().getPreviousPredicate()
+                      + "\n");
+    }
   }
 
   private String GenerateVerbalizedSentence(Entry<String, RDFProcessEntity> entry) {
@@ -103,17 +127,32 @@ public class ResultExtractor {
 
   private void GenerateReport(FileWriter fwReport, Entry<String, RDFProcessEntity> entry)
       throws IOException {
-    fwReport.append(
-        entry.getKey().toString()
-            + " "
-            + entry.getValue().getSubject()
-            + " "
-            + entry.getValue().getPredicate()
-            + " "
-            + entry.getValue().getObject()
-            + " it was "
-            + entry.getValue().getPreviusObject()
-            + "\n");
+    if(entry.getValue().getAfterProcessResultIsAcceptable()) {
+      fwReport.append(
+              entry.getKey().toString()
+                      + " "
+                      + entry.getValue().getSubject()
+                      + " "
+                      + entry.getValue().getPredicate()
+                      + " "
+                      + entry.getValue().getObject()
+                      + " it was "
+                      + entry.getValue().getPreviousObject()
+                      + "\n");
+    }else{
+      fwReport.append(
+              entry.getKey().toString()
+                      + " "
+                      + entry.getValue().getSubject()
+                      + " "
+                      + entry.getValue().getPredicate()
+                      + " "
+                      + entry.getValue().getObject()
+                      + " it was "
+                      + entry.getValue().getPreviousObject()
+                      + " it is not accepted !!"
+                      + "\n");
+    }
   }
 
   private void GenerateNtFile(FileWriter fwNt, Entry<String, RDFProcessEntity> entry)

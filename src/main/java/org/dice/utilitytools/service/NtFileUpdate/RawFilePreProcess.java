@@ -9,16 +9,19 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import org.springframework.stereotype.Component;
 
+// this class read a file and copy it in another file as raw preprocess also it do some character replacement to enhance the file
+// we dont want to change the source file then make a copy of it
+
 @Component
 public class RawFilePreProcess {
-  public String Process(String fileName) {
+  public String Process(String fileName, String whatTodo) {
     String[] fileNameParts = fileName.split("\\.");
     // Iterator<Entry<String, RDFProcessEntity>> iterator = proccessMap.entrySet().iterator();
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("-yyyy-MM-dd-HH-mm-ss");
     LocalDateTime now = LocalDateTime.now();
 
     String PreProccessedFileName =
-        fileNameParts[0] + "_RawPreProcess_" + dtf.format(now) + "." + fileNameParts[1];
+        fileNameParts[0] + "_RawPreProcess_" + whatTodo +"-"+ dtf.format(now) + "." + fileNameParts[1];
     try (BufferedReader br =
             new BufferedReader(new InputStreamReader(new FileInputStream( fileName)));
         FileWriter fw = new FileWriter( PreProccessedFileName)) {
