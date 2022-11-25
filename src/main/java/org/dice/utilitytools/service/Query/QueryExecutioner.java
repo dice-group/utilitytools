@@ -15,6 +15,10 @@ public class QueryExecutioner {
 
   public QueryExecutioner() {}
 
+  public QueryExecutioner(String serviceRequestURL) {
+    this.serviceRequestURL = serviceRequestURL;
+  }
+
 /*  public QueryExecutioner(String serviceRequestURL) {
     this.serviceRequestURL = serviceRequestURL;
   }

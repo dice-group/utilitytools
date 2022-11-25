@@ -1,19 +1,24 @@
 package org.dice.utilitytools;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 import java.util.stream.Collectors;
 
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QuerySolution;
+import org.apache.jena.query.ResultSet;
 import org.dice.utilitytools.service.NtFileUpdate.NtFileUpdater;
+import org.dice.utilitytools.service.Query.QueryExecutioner;
 import org.dice.utilitytools.service.filter.CommonRDFFilter;
 import org.dice.utilitytools.service.load.IOService;
 import org.dice.utilitytools.service.ontology.OntologyNtFileUpdater;
 import org.dice.utilitytools.service.spliter.BasedDateSpliter;
-import org.dice.utilitytools.service.transform.NegativeSampleTransformer;
-import org.dice.utilitytools.service.transform.RDFModelTransform;
-import org.dice.utilitytools.service.transform.TTLtoSimpleRDFTransform;
-import org.dice.utilitytools.service.transform.Transformer;
+import org.dice.utilitytools.service.transform.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -54,7 +59,7 @@ public class UtilitytoolsApplication implements CommandLineRunner {
   }
 
   @Override
-  public void run(String... args) throws IOException {
+  public void run(String... args) throws Exception {
 
     if (args == null || args.length == 0) {
       System.out.println("no arguments ! use h to get help");
@@ -86,6 +91,14 @@ public class UtilitytoolsApplication implements CommandLineRunner {
 
       System.out.println("8 . use 'cso' to change the subject and an object for a predicate");
       System.out.println("\t \t cso [File] [predicate]");
+
+      System.out.println("9 . use 'qip' to query and get instance of each given path");
+      System.out.println("\t \t qip [pathFiles] [endpoint] [number of instances] [location for save the results]");
+
+      System.out.println("10. use 'gffGF' generate the false fact from ground truth file ");
+      System.out.println("\t \t gffGF [trueFile] [groundTruthFile] [c for comma t for tab separated file s for space] [path for save result with file name]");
+
+
 
       return ;
     }
@@ -239,7 +252,7 @@ public class UtilitytoolsApplication implements CommandLineRunner {
           if(args[2].equals("t")){
               separetor = "\t";
           }else{
-              if(args[3].equals("c")){
+              if(args[2].equals("c")){
                   separetor = ",";
               }else
               {
@@ -283,6 +296,123 @@ public class UtilitytoolsApplication implements CommandLineRunner {
           String predicate = args[2];
 
           service.switchSubjectAndObjectForAPredicate(filePath, predicate);
+      }
+
+      //Functionality  'qip' to query and get instance of each given path
+
+      if(args.length == 5 && args[0].equals("qip")){
+          String pathsFile = args[1];
+          File f = new File(pathsFile);
+          if (!f.exists()) {
+              System.out.println("no file exist");
+              return;
+          }
+
+          if (!f.isFile()) {
+              System.out.println(pathsFile + " is not a file");
+              return;
+          }
+
+          if (!f.canRead()) {
+              System.out.println(pathsFile + " is not readable");
+              return;
+          }
+
+          SplitSimpleTransformer simpleTransformer = new SplitSimpleTransformer();
+          // the output has extra [
+          List<String> nonTrimmedPaths = simpleTransformer.Transform(f,", ");
+
+          String endpoint = args[2];
+          String numberOfInstances = args[3];
+          String locationForSaveTheResult = args[4];
+
+          QueryTransformer qT = new QueryTransformer(Integer.parseInt(numberOfInstances));
+
+          List<String> listOfQueries = nonTrimmedPaths.stream().map(p -> {
+              try {
+                  return qT.Transform(p,",");
+              } catch (Exception e) {
+                  throw new RuntimeException(e);
+              }
+          }).collect(Collectors.toList());
+
+          StringBuilder sbForSaveResult = new StringBuilder();
+          for (String query:listOfQueries) {
+              QueryExecutioner queryExecutioner = new QueryExecutioner(endpoint);
+              try (QueryExecution queryExecution = queryExecutioner.getQueryExecution(query)) {
+                  ResultSet resultSet = queryExecution.execSelect();
+                  while (resultSet.hasNext()) {
+                      QuerySolution qs = resultSet.next();
+                      String str = qs.toString();
+                      sbForSaveResult.append(query);
+                      sbForSaveResult.append("\n");
+                      sbForSaveResult.append(str);
+                      sbForSaveResult.append("\n----------\n");
+                  }
+              }catch (Exception ex){
+                  System.out.println(ex.getMessage());
+              }
+          }
+
+          File propDir = new File(locationForSaveTheResult);
+          try (BufferedWriter bw = new BufferedWriter(new FileWriter(propDir));) {
+              bw.write(sbForSaveResult.toString());
+          } catch (IOException ex) {
+              System.out.println(ex.getMessage());
+          }
+
+      }
+
+      //
+
+      //gffGF [trueFile] [groundTruthFile] [c for comma t for tab separated file s for space] [path for save result with file name]
+      // functionality 10
+      if (args.length == 5 && args[0].equals("gffGF")){
+          String trueFile = args[1];
+          String groundTruthFile = args[2];
+
+          System.out.println("start generating false facts");
+          String separetor;
+          if(args[3].equals("t")){
+              separetor = "\t";
+          }else{
+              if(args[3].equals("c")){
+                  separetor = ",";
+              }else
+              {
+                  separetor = " ";
+              }
+          }
+
+          String savePath = args[4];
+
+          List<String> groundTruthFileTriples = new ArrayList<>();
+          File groundTruthTripleFile = ioService.readFile(groundTruthFile);
+          Scanner scanner = new Scanner(groundTruthTripleFile);
+          String line = "";
+          while (scanner.hasNextLine()) {
+              line = scanner.nextLine();
+              groundTruthFileTriples.add(line);
+          }
+
+          negativeSampleTransformer.setGroundTruth(groundTruthFileTriples,"http://rdf.frockg.eu/frockg/ontology/hasAdverseReaction",separetor);
+
+          List<String> trueTriples = new ArrayList<>();
+          File trueTriplesFile = ioService.readFile(trueFile);
+          scanner = new Scanner(trueTriplesFile);
+
+          while (scanner.hasNextLine()) {
+              line = scanner.nextLine();
+              trueTriples.add(line);
+          }
+          List<String> theGeneratedFalseFacts =negativeSampleTransformer.runQueryGroundTruthFile(trueTriples,separetor).stream().map(t -> t.toString()).collect(Collectors.toList());
+
+
+
+          System.out.println(theGeneratedFalseFacts.size() + "false facts are generated will be save " + savePath);
+
+
+          ioService.writeListAsFile(theGeneratedFalseFacts, savePath, true);
       }
 
       System.out.println("Finish");

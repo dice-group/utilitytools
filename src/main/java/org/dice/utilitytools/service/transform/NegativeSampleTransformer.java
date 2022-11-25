@@ -18,6 +18,8 @@ public class NegativeSampleTransformer {
 
     long heapSizeThreshold = 40000000;
     HashSet<String> setOfAllObjects;
+    List<String> listOfAllObjects;
+    HashSet<String> groundTruth;
     HashMap<String, HashSet<String>> mapOfTrueFacts;
     HashMap<String, HashSet<String>> mapOfFalseFacts;
     HashMap<String, List<String>> mapOfFalseFactsListVersion;
@@ -163,6 +165,76 @@ public class NegativeSampleTransformer {
         return returnValue;
     }
 
+    // this method accept a file which contains triples and store subject+object as set
+    public void setGroundTruth(List<String> input,String predicate, String separator){
+        groundTruth = new HashSet<>();
+        setOfAllObjects = new HashSet<>();
+        long counter = 0;
+        for (String s:input) {
+            counter = counter+1;
+            s = s.replace(predicate,"");
+            s = s.trim().replace(" ","").replace("\t","").replace(",","").replace("<","").replace(">","").replace(".","");
+            groundTruth.add(s);
+            if(counter%1000==0){
+                System.out.println((counter/input.size())*100);
+            }
+        }
+        counter = 0;
+        for(String s:input){
+            counter = counter+1;
+            s = s.replace("<","").replace(">","");
+            String[] parts = s.split(" ");
+            setOfAllObjects.add(parts[2]);
+            if(counter%1000==0){
+                System.out.println((counter/input.size())*100);
+            }
+        }
+        listOfAllObjects = new ArrayList<>(setOfAllObjects);
+    }
+
+    // for each input see the groundTruth set if exist there then chose another predicate
+    public List<String> runQueryGroundTruthFile(List<String> input, String separator){
+        HashSet<String> resultSet = new HashSet<>();
+        System.out.println("size of the input list for generating the false facts are " + input.size());
+        reset();
+        int progressCount = 0;
+        int circulateCounter = 0;
+        for(String line:input){
+            circulateCounter = circulateCounter + 1;
+            if(circulateCounter > listOfAllObjects.size()){
+                circulateCounter = 0;
+            }
+
+            progressCount = progressCount + 1;
+            System.out.println("progress :"+progressCount +"from" +input.size() + "%");
+
+
+            String[] parts = line.split(separator);
+
+            String subject = parts[0];
+            String predicate = parts[1];
+            boolean isDone = false;
+            if(!isDone){
+                String optionalObject = listOfAllObjects.get(circulateCounter);
+                String optionalTriple = subject+separator+"<http://rdf.frockg.eu/frockg/ontology/hasAdverseReaction>"+separator+"<"+optionalObject+"> .";
+                String tmpS = new String(optionalTriple);
+                tmpS = tmpS.replace("http://rdf.frockg.eu/frockg/ontology/hasAdverseReaction","");
+                tmpS = tmpS.replace(" ","").replace("\t","").replace(",","").replace("<","").replace(">","").replace(".","");
+                if(groundTruth.contains(tmpS+optionalObject)){
+                    circulateCounter = circulateCounter + 1;
+                    if(circulateCounter > listOfAllObjects.size()){
+                        circulateCounter = 0;
+                    }
+                } else {
+                    resultSet.add(optionalTriple);
+                    isDone = true;
+                }
+            }
+
+        }
+        List<String> returnList = new ArrayList<>(resultSet);
+        return returnList;
+    }
     public List<String> runQueryOverDBpedia(List<String> input, String separator,int fromLine, int toLine){
         // run this query if it has result consider as negative triple if not remove the facts
         HashSet<String> resultSet = new HashSet<>();
