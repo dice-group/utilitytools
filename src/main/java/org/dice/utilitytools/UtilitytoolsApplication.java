@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
@@ -54,6 +55,8 @@ public class UtilitytoolsApplication implements CommandLineRunner {
   @Autowired
   TTLtoSimpleRDFTransform tTLtoSimpleRDFTransform;
 
+  DBOPreprocessor dboPreprocessor = new DBOPreprocessor();
+
   public static void main(String[] args) {
     SpringApplication.run(UtilitytoolsApplication.class, args);
   }
@@ -98,6 +101,11 @@ public class UtilitytoolsApplication implements CommandLineRunner {
       System.out.println("10. use 'gffGF' generate the false fact from ground truth file ");
       System.out.println("\t \t gffGF [trueFile] [groundTruthFile] [c for comma t for tab separated file s for space] [path for save result with file name]");
 
+      System.out.println("11. use 'dbp' Preprocessor the db to prune the triples");
+      System.out.println("\t \t dbp [input folder which contains bz2 files] [folder for save the results]");
+
+      System.out.println("12. use 'reLi' remove literatur");
+      System.out.println("\t \t reLI [input file] [output file]");
 
 
       return ;
@@ -414,6 +422,24 @@ public class UtilitytoolsApplication implements CommandLineRunner {
 
           ioService.writeListAsFile(theGeneratedFalseFacts, savePath, true);
       }
+
+      //
+      if(args.length == 3 && args[0].equals("dbp")){
+          String inputPath = args[1];
+          String outputPath = args[2];
+          File inputFolder = new File(inputPath);
+          File[] existFiles = inputFolder.listFiles();
+          int counter = 0;
+          for(File f:existFiles){
+              if(!f.isDirectory() && f.isFile()){
+                  if(FilenameUtils.getExtension(f.getName()).equals("bz2")){
+                      counter = counter +1;
+                      dboPreprocessor.process(f.getAbsolutePath(), outputPath,counter);
+                  }
+              }
+          }
+      }
+
 
       System.out.println("Finish");
   }
