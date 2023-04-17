@@ -28,8 +28,11 @@ public class DBOPreprocessor {
     private static final Set<String> PROPERTY_BLACKLIST = new HashSet<String>(Arrays.asList(
             "http://dbpedia.org/ontology/wikiPageExternalLink", "http://dbpedia.org/ontology/dbo:wikiPageWikiLink"));
 
-    public void process(String inputFile, String outputFilePath, int counter){
-        try (Writer out1 = new FileWriter(outputFilePath+counter+".out")) {
+    public void process(String inputFile, String outputFolder,boolean isNFfile){
+        String[] parts = inputFile.split("/");
+        String fileName = parts[parts.length-1];
+        fileName = fileName.replace(".out","").replace("'","");
+        try (Writer out1 = new FileWriter(outputFolder+fileName+".out")) {
             StreamRDF outStream = StreamRDFLib.writer(out1);
             ProgressMonitor monitor1 = ProgressMonitor.create(LOGGER, "Added triples", 100000, 10);
             outStream = new ProgressStreamRDF(outStream, monitor1);
@@ -58,21 +61,70 @@ public class DBOPreprocessor {
                 StreamRDF fileStream = new ProgressStreamRDF(stream, monitorS);
                 monitorS.start();
                 // If we have a bz2 file
-                if(inputFile.endsWith("bz2")) {
-                    try(BZip2CompressorInputStream bzIn = new BZip2CompressorInputStream(new FileInputStream(inputFile))) {
-                        if(inputFile.contains("ttl")){
+            if(isNFfile){
+                RDFDataMgr.parse(stream, inputFile, Lang.NT);
+            }else {
+                if (inputFile.endsWith("bz2")) {
+                    try (BZip2CompressorInputStream bzIn = new BZip2CompressorInputStream(new FileInputStream(inputFile))) {
+                        if (inputFile.contains("ttl")) {
                             RDFDataMgr.parse(fileStream, bzIn, Lang.TTL);
-                        }else {
+                        } else {
                             RDFDataMgr.parse(fileStream, bzIn, Lang.NT);
                         }
                     }
                 } else {
-                    if(inputFile.contains("ttl")){
+                    if (inputFile.contains("ttl")) {
                         RDFDataMgr.parse(stream, inputFile, Lang.TTL);
-                    }else {
+                    } else {
                         RDFDataMgr.parse(stream, inputFile, Lang.NT);
                     }
                 }
+            }
+            monitor1.finish();
+            stream.finish();
+            LOGGER.info("Finished");
+        }catch (Exception ex){
+            LOGGER.error(ex.getMessage());
+            ex.printStackTrace();
+        }
+    }
+
+    // remove the literature
+    public void removeLiteral(String inputFile, String outputFolder){
+        String[] parts = inputFile.split("/");
+        String fileName = parts[parts.length-1];
+        try (Writer out1 = new FileWriter(outputFolder+fileName+".out")) {
+            StreamRDF outStream = StreamRDFLib.writer(out1);
+            ProgressMonitor monitor1 = ProgressMonitor.create(LOGGER, "remove literature", 100000, 10);
+            outStream = new ProgressStreamRDF(outStream, monitor1);
+
+            // filter the literal
+            StreamRDF stream = new RDFStreamTripleFilter(
+                    new NodeFilterBasedTripleFilter(null, null, o->!o.isLiteral()),
+                    outStream);
+
+            monitor1.start();
+
+            LOGGER.info("Streaming file {}.", inputFile);
+            ProgressMonitor monitorS = ProgressMonitor.create(LOGGER, "Processed triples", 100000, 10);
+            StreamRDF fileStream = new ProgressStreamRDF(stream, monitorS);
+            monitorS.start();
+            // If we have a bz2 file
+            if(inputFile.endsWith("bz2")) {
+                try(BZip2CompressorInputStream bzIn = new BZip2CompressorInputStream(new FileInputStream(inputFile))) {
+                    if(inputFile.contains("ttl")){
+                        RDFDataMgr.parse(fileStream, bzIn, Lang.TTL);
+                    }else {
+                        RDFDataMgr.parse(fileStream, bzIn, Lang.NT);
+                    }
+                }
+            } else {
+                if(inputFile.contains("ttl")){
+                    RDFDataMgr.parse(stream, inputFile, Lang.TTL);
+                }else {
+                    RDFDataMgr.parse(stream, inputFile, Lang.NT);
+                }
+            }
 
             monitor1.finish();
             stream.finish();

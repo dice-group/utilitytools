@@ -57,6 +57,8 @@ public class UtilitytoolsApplication implements CommandLineRunner {
 
   DBOPreprocessor dboPreprocessor = new DBOPreprocessor();
 
+    CSVProcessor csvProcessor = new CSVProcessor();
+
   public static void main(String[] args) {
     SpringApplication.run(UtilitytoolsApplication.class, args);
   }
@@ -104,8 +106,14 @@ public class UtilitytoolsApplication implements CommandLineRunner {
       System.out.println("11. use 'dbp' Preprocessor the db to prune the triples");
       System.out.println("\t \t dbp [input folder which contains bz2 files] [folder for save the results]");
 
-      System.out.println("12. use 'reLi' remove literatur");
+      System.out.println("12. use 'reLi' remove literal");
       System.out.println("\t \t reLI [input file] [output file]");
+
+      System.out.println("12. use 'reLiFOLDER' remove literal folder");
+      System.out.println("\t \t reLiFOLDER [input file] [outputPathWithSlash]");
+
+      System.out.println("13. use 'fillTemplate' for insert data in a csv file with template");
+      System.out.println("\t \t fillTemplate [input file] [template file] [output file] ");
 
 
       return ;
@@ -429,17 +437,84 @@ public class UtilitytoolsApplication implements CommandLineRunner {
           String outputPath = args[2];
           File inputFolder = new File(inputPath);
           File[] existFiles = inputFolder.listFiles();
+          for(File f:existFiles){
+              if(!f.isDirectory() && f.isFile()){
+                  //if(FilenameUtils.getExtension(f.getName()).equals("bz2")){
+                      dboPreprocessor.process(f.getAbsolutePath(), outputPath,true);
+                  //}
+              }
+          }
+      }
+
+      //System.out.println("12. use 'reLi' remove literatur");
+      //      System.out.println("\t \t reLI [input file] [output file]");
+      // 12
+
+      if(args.length == 3 && args[0].equals("reLiFOLDER")){
+          String inputPath = args[1];
+          String outputPathWithSlash = args[2];
+          File inputFolder = new File(inputPath);
+          File[] existFiles = inputFolder.listFiles();
           int counter = 0;
           for(File f:existFiles){
               if(!f.isDirectory() && f.isFile()){
                   if(FilenameUtils.getExtension(f.getName()).equals("bz2")){
                       counter = counter +1;
-                      dboPreprocessor.process(f.getAbsolutePath(), outputPath,counter);
+                      dboPreprocessor.removeLiteral(f.getAbsolutePath(), outputPathWithSlash);
                   }
               }
           }
       }
 
+      if(args.length == 3 && args[0].equals("reLi")){
+          String inputPath = args[1];
+          File inputFile = new File(inputPath);
+          if (!inputFile.exists()) {
+              System.out.println("no file exist");
+              return;
+          }
+
+          if (!inputFile.isFile()) {
+              System.out.println(inputPath + " is not a file");
+              return;
+          }
+
+          if (!inputFile.canRead()) {
+              System.out.println(inputPath + " is not readable");
+              return;
+          }
+
+          String outputPath = args[2];
+          dboPreprocessor.removeLiteral(inputFile.getAbsolutePath(),outputPath);
+
+
+      }
+
+      if(args.length == 4 && args[0].equals("fillTemplate")){
+          String inputPath = args[1];
+          File inputFile = new File(inputPath);
+          if (!inputFile.exists()) {
+              System.out.println("no file exist");
+              return;
+          }
+
+          if (!inputFile.isFile()) {
+              System.out.println(inputPath + " is not a file");
+              return;
+          }
+
+          if (!inputFile.canRead()) {
+              System.out.println(inputPath + " is not readable");
+              return;
+          }
+
+          String templateFile = args[2];
+          String outputPath = args[3];
+
+          csvProcessor.fillTheTemplate(inputPath,templateFile,outputPath);
+
+
+      }
 
       System.out.println("Finish");
   }
