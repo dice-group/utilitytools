@@ -13,8 +13,11 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
+import org.dice.utilitytools.mapper.TranslatedResult2ElasticMapper;
+import org.dice.utilitytools.service.FolderCrawler;
 import org.dice.utilitytools.service.NtFileUpdate.NtFileUpdater;
 import org.dice.utilitytools.service.Query.QueryExecutioner;
+import org.dice.utilitytools.service.Translator;
 import org.dice.utilitytools.service.filter.CommonRDFFilter;
 import org.dice.utilitytools.service.load.IOService;
 import org.dice.utilitytools.service.ontology.OntologyNtFileUpdater;
@@ -109,11 +112,14 @@ public class UtilitytoolsApplication implements CommandLineRunner {
       System.out.println("12. use 'reLi' remove literal");
       System.out.println("\t \t reLI [input file] [output file]");
 
-      System.out.println("12. use 'reLiFOLDER' remove literal folder");
+      System.out.println("13. use 'reLiFOLDER' remove literal folder");
       System.out.println("\t \t reLiFOLDER [input file] [outputPathWithSlash]");
 
-      System.out.println("13. use 'fillTemplate' for insert data in a csv file with template");
+      System.out.println("14. use 'fillTemplate' for insert data in a csv file with template");
       System.out.println("\t \t fillTemplate [input file] [template file] [output file] ");
+
+      System.out.println("15. use 'trFolder' translate all files in folder and subfolders ");
+      System.out.println("\t \t trFolder [start folder] [destination folder]");
 
 
       return ;
@@ -512,8 +518,37 @@ public class UtilitytoolsApplication implements CommandLineRunner {
           String outputPath = args[3];
 
           csvProcessor.fillTheTemplate(inputPath,templateFile,outputPath);
+      }
 
+      // 15 trFolder [start folder] [destination folder]
+      if(args.length == 3 && args[0].equals("trFolder")){
+          String startFolderPath = args[1];
+          String destinationPath = args[2];
+          File startFolder = new File(startFolderPath);
+          File destination = new File(destinationPath);
 
+          if (!startFolder.exists()) {
+              System.out.println(startFolderPath+" no folder exist");
+              return;
+          }
+
+          if (!startFolder.isDirectory()) {
+              System.out.println(startFolderPath + " is not a directory");
+              return;
+          }
+
+          if (!destination.exists()) {
+              System.out.println(destinationPath+"no folder exist");
+              return;
+          }
+
+          if (!destination.isDirectory()) {
+              System.out.println(destinationPath + " is not a directory");
+              return;
+          }
+
+          FolderCrawler folderCrawler = new FolderCrawler(new Translator("http://neamt.cs.upb.de:6100/custom-pipeline"),new TranslatedResult2ElasticMapper(),destinationPath);
+          folderCrawler.start(startFolderPath);
       }
 
       System.out.println("Finish");
