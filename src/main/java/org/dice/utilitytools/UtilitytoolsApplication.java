@@ -17,6 +17,7 @@ import org.dice.utilitytools.mapper.TranslatedResult2ElasticMapper;
 import org.dice.utilitytools.service.FolderCrawler;
 import org.dice.utilitytools.service.NtFileUpdate.NtFileUpdater;
 import org.dice.utilitytools.service.Query.QueryExecutioner;
+import org.dice.utilitytools.service.handler.APICaller;
 import org.dice.utilitytools.service.handler.Translator;
 import org.dice.utilitytools.service.filter.CommonRDFFilter;
 import org.dice.utilitytools.service.load.IOService;
@@ -119,7 +120,7 @@ public class UtilitytoolsApplication implements CommandLineRunner {
       System.out.println("\t \t fillTemplate [input file] [template file] [output file] ");
 
       System.out.println("15. use 'trFolder' translate all files in folder and subfolders ");
-      System.out.println("\t \t trFolder [start folder] [destination folder]");
+      System.out.println("\t \t trFolder [start folder] [destination folder] [threadsNumber]");
 
       System.out.println("16. use 'fnFolder' send all files in folder and subfolders for fake news detection and gathering the results");
       System.out.println("\t \t fnFolder [start folder] [destination folder]");
@@ -524,9 +525,10 @@ public class UtilitytoolsApplication implements CommandLineRunner {
       }
 
       // 15 trFolder [start folder] [destination folder]
-      if(args.length == 3 && args[0].equals("trFolder")){
+      if(args.length == 4 && args[0].equals("trFolder")){
           String startFolderPath = args[1];
           String destinationPath = args[2];
+          int threadsNumber = Integer.parseInt(args[3]);
           File startFolder = new File(startFolderPath);
           File destination = new File(destinationPath);
 
@@ -550,7 +552,7 @@ public class UtilitytoolsApplication implements CommandLineRunner {
               return;
           }
 
-          FolderCrawler folderCrawler = new FolderCrawler(new Translator("http://neamt.cs.upb.de:6100/custom-pipeline", new TranslatedResult2ElasticMapper(), destinationPath));
+          FolderCrawler folderCrawler = new FolderCrawler(new Translator("http://neamt.cs.upb.de:6100/custom-pipeline", new TranslatedResult2ElasticMapper(), destinationPath, threadsNumber));
           folderCrawler.start(startFolderPath);
       }
 
@@ -581,7 +583,7 @@ public class UtilitytoolsApplication implements CommandLineRunner {
               return;
           }
 
-          FolderCrawler folderCrawler = new FolderCrawler(new Translator("http://neamt.cs.upb.de:6100/custom-pipeline", new TranslatedResult2ElasticMapper(), destinationPath));
+          FolderCrawler folderCrawler = new FolderCrawler(new APICaller("http://localhost:5000", destinationPath));
           folderCrawler.start(startFolderPath);
       }
 

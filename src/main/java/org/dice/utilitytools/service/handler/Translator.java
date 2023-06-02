@@ -10,18 +10,25 @@ import org.springframework.web.client.RestTemplate;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.HashMap;
+
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
-public class Translator implements ITaskHandler<Void, File>{
+public class Translator implements ITaskHandler<Void, HashMap<String,Boolean>>{
+    int threadsNumber;
     private String destinationPath;
     private TranslatedResult2ElasticMapper translatedResult2ElasticMapper;
     RestTemplate restTemplate;
     String url;
-    public Translator(String url, TranslatedResult2ElasticMapper translatedResult2ElasticMapper, String destinationPath){
+    public Translator(String url, TranslatedResult2ElasticMapper translatedResult2ElasticMapper, String destinationPath, int threadsNumber){
         this.translatedResult2ElasticMapper = translatedResult2ElasticMapper;
         this.restTemplate = new RestTemplate();
         this.url = url;
         this.destinationPath = destinationPath;
+        this.threadsNumber = threadsNumber;
         Unirest.setTimeouts(600000,300000);
     }
 
@@ -44,7 +51,22 @@ try {
     }
 
     @Override
-    public Void handleTask(File file) {
+    public Void handleTask(HashMap<String,Boolean> paths) {
+        ExecutorService executor = Executors.newFixedThreadPool(threadsNumber);
+
+        for (Map.Entry<String, Boolean> entry : paths.entrySet()) {
+            String path = entry.getKey();
+            Boolean value = entry.getValue();
+            executor.submit(() -> {
+                ht(new File(path));
+            });
+        }
+        executor.shutdown();
+        return null;
+    }
+
+
+    public Void ht(File file) {
         try{
             System.out.println("translating this File: " + file.getName());
             String maintextToTranslate = extractTextForTranslate(file,"maintext");
@@ -78,6 +100,7 @@ try {
 
                     if (isSuccess) {
                         //remove file
+                        System.out.println("deleting " + file.getAbsolutePath());
                         file.delete();
                     }
 

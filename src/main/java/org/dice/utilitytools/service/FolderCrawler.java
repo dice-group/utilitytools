@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -17,6 +18,7 @@ import java.util.List;
  This class is responsible for crawling through a directory and its sub-directories.
  */
 public class FolderCrawler {
+    HashMap<String,Boolean> paths = new HashMap<>();
     private ITaskHandler taskHandler;
     public FolderCrawler(ITaskHandler taskHandler) {
         this.taskHandler = taskHandler;
@@ -24,6 +26,7 @@ public class FolderCrawler {
 
     public void start(String startPath) throws IOException {
         crawl(new File(startPath));
+        taskHandler.handleTask(paths);
     }
 
     private void crawl(File folder) throws IOException {
@@ -33,7 +36,7 @@ public class FolderCrawler {
                 System.out.println("Folder: " + file.getName());
                 crawl(file);
             } else {
-                taskHandler.handleTask(file);
+                paths.put(file.getPath(),false);
             }
         }
     }
