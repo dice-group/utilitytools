@@ -1,10 +1,8 @@
 package org.dice.utilitytools;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
 import java.util.stream.Collectors;
@@ -122,9 +120,9 @@ public class UtilitytoolsApplication implements CommandLineRunner {
       System.out.println("15. use 'trFolder' translate all files in folder and subfolders ");
       System.out.println("\t \t trFolder [start folder] [destination folder] [threadsNumber]");
 
-      System.out.println("16. use 'fnFolder' send all files in folder and subfolders for fake news detection and gathering the results");
-      System.out.println("\t \t fnFolder [start folder] [destination folder]");
-
+      System.out.println("16. use 'jsonlCall' for each line of jsonl file send an X value to server and save the result and wait to status of te request change to done then proceed");
+      System.out.println(" also could mentioned to continue from the progress file");
+      System.out.println("\t \t jsonlCall [json file] [destination file] [api to call] [api for check status] [is continue] [file to save progress] ");
 
       return ;
     }
@@ -556,35 +554,67 @@ public class UtilitytoolsApplication implements CommandLineRunner {
           folderCrawler.start(startFolderPath);
       }
 
-      // 16 fnFolder [start folder] [destination folder]
-      if(args.length == 3 && args[0].equals("fnFolder")){
-          String startFolderPath = args[1];
-          String destinationPath = args[2];
-          File startFolder = new File(startFolderPath);
-          File destination = new File(destinationPath);
+      // 16 jsonlCall [json file] [destination file] [api to call] [api for check status] [is continuing] [file to save progress]
+      if(args.length == 7 && args[0].equals("jsonlCall")){
+          String filePath = args[1];
+          String destinationFilePath = args[2];
+          String api = args[3];
+          String apistatusCheck = args[4];
+          String isContinuing = args[5];
+          String progressfilePath = args[6];
 
-          if (!startFolder.exists()) {
-              System.out.println(startFolderPath+" no folder exist");
-              return;
+          File startFolder = ioService.readFile(filePath);
+          File destination = ioService.readFile(destinationFilePath);
+
+//http://localhost:5000/check?text=
+          APICaller apic = new APICaller(api,destinationFilePath, apistatusCheck,progressfilePath);
+          if(isContinuing.equals("no")) {
+              HashMap<String, Boolean> jsons = new HashMap<>();
+              try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+                  String line;
+                  while ((line = reader.readLine()) != null) {
+                      jsons.put(line, false);
+                  }
+              } catch (IOException e) {
+                  System.out.println("An error occurred while reading the file: " + e.getMessage());
+              }
+              apic.handleTask(jsons);
           }
-
-          if (!startFolder.isDirectory()) {
-              System.out.println(startFolderPath + " is not a directory");
-              return;
+          else {
+              File progressFile = new File(progressfilePath);
+              if (!progressFile.exists()) {
+                  HashMap<String, Boolean> jsons = new HashMap<>();
+                  try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+                      String line;
+                      while ((line = reader.readLine()) != null) {
+                          jsons.put(line, false);
+                      }
+                  } catch (IOException e) {
+                      System.out.println("An error occurred while reading the file: " + e.getMessage());
+                  }
+                  FileOutputStream fileOut = null;
+                  try {
+                      fileOut =
+                              new FileOutputStream(progressfilePath);
+                      ObjectOutputStream out = new ObjectOutputStream(fileOut);
+                      System.out.println("updatePr");
+                      out.writeObject(jsons);
+                      out.close();
+                      fileOut.close();
+                  } catch (IOException i) {
+                      i.printStackTrace();
+                  }finally {
+                      try {
+                          if (fileOut != null) {
+                              fileOut.close();
+                          }
+                      }catch (Exception ex){
+                          ex.printStackTrace();
+                      }
+                  }
+              }
+              apic.handleTaskFromFile();
           }
-
-          if (!destination.exists()) {
-              System.out.println(destinationPath+"no folder exist");
-              return;
-          }
-
-          if (!destination.isDirectory()) {
-              System.out.println(destinationPath + " is not a directory");
-              return;
-          }
-
-          FolderCrawler folderCrawler = new FolderCrawler(new APICaller("http://localhost:5000", destinationPath));
-          folderCrawler.start(startFolderPath);
       }
 
       System.out.println("Finish");
