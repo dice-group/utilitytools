@@ -9,8 +9,6 @@ import java.io.File;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.io.*;
 
 import java.io.UnsupportedEncodingException;
@@ -91,7 +89,7 @@ public class APICaller implements ITaskHandler <Void, HashMap<String,Boolean>>{
             obj = new JSONObject(jsonResponce);
             String nebulaId = obj.getString("id");
             //TimeUnit.SECONDS.sleep(5);
-            try (FileWriter fileWriter = new FileWriter("/home/farshad/NEBULA/nebulaids_2.tsv", true)) {
+            try (FileWriter fileWriter = new FileWriter(this.progressFilePath+"_2.tsv", true)) {
                 fileWriter.write(id.toString()+"\t"+label+"\t"+nebulaId+"\t"+claim);
                 fileWriter.write(System.lineSeparator()); // Add a new line after the appended content
                 System.out.println("Content appended to the file.");

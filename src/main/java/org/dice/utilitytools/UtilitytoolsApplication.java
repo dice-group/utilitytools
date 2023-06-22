@@ -1,12 +1,15 @@
 package org.dice.utilitytools;
 
 import java.io.*;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
 import java.util.stream.Collectors;
 
+import com.mashape.unirest.http.HttpResponse;
+import com.mashape.unirest.http.Unirest;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QuerySolution;
@@ -16,12 +19,15 @@ import org.dice.utilitytools.service.FolderCrawler;
 import org.dice.utilitytools.service.NtFileUpdate.NtFileUpdater;
 import org.dice.utilitytools.service.Query.QueryExecutioner;
 import org.dice.utilitytools.service.handler.APICaller;
+import org.dice.utilitytools.service.handler.ITaskHandler;
 import org.dice.utilitytools.service.handler.Translator;
 import org.dice.utilitytools.service.filter.CommonRDFFilter;
 import org.dice.utilitytools.service.load.IOService;
 import org.dice.utilitytools.service.ontology.OntologyNtFileUpdater;
 import org.dice.utilitytools.service.spliter.BasedDateSpliter;
 import org.dice.utilitytools.service.transform.*;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -123,6 +129,13 @@ public class UtilitytoolsApplication implements CommandLineRunner {
       System.out.println("16. use 'jsonlCall' for each line of jsonl file send an X value to server and save the result and wait to status of te request change to done then proceed");
       System.out.println(" also could mentioned to continue from the progress file");
       System.out.println("\t \t jsonlCall [json file] [destination file] [api to call] [api for check status] [is continue] [file to save progress] ");
+
+      System.out.println("17. use 'jsonlCallProcessResult' for each line of jsonl file send an X value to server and process the response ");
+      System.out.println(" use for gathering nebula training samples");
+      System.out.println("\t \t jsonlCallProcessResult [json file] [destination file] [api to call]");
+
+      System.out.println("18. use 'CrR' to calculate the Coreference Resolution of all texts in a directory");
+      System.out.println("\t \t CrR [start directory] [destination directory]");
 
       return ;
     }
@@ -522,7 +535,7 @@ public class UtilitytoolsApplication implements CommandLineRunner {
           csvProcessor.fillTheTemplate(inputPath,templateFile,outputPath);
       }
 
-      // 15 trFolder [start folder] [destination folder]
+      // 15 trFolder [start folder] [destination folder] [threadsNumber]
       if(args.length == 4 && args[0].equals("trFolder")){
           String startFolderPath = args[1];
           String destinationPath = args[2];
@@ -550,7 +563,14 @@ public class UtilitytoolsApplication implements CommandLineRunner {
               return;
           }
 
-          FolderCrawler folderCrawler = new FolderCrawler(new Translator("http://neamt.cs.upb.de:6100/custom-pipeline", new TranslatedResult2ElasticMapper(), destinationPath, threadsNumber));
+          List<ITaskHandler> taskHandlers = new ArrayList<>();
+          taskHandlers.add(new Translator("http://neamt.cs.upb.de:6100/custom-pipeline", new TranslatedResult2ElasticMapper(), destinationPath, threadsNumber));
+          taskHandlers.add(new Translator("http://neamt1.cs.upb.de:6100/custom-pipeline", new TranslatedResult2ElasticMapper(), destinationPath, threadsNumber));
+          taskHandlers.add(new Translator("http://neamt2.cs.upb.de:6100/custom-pipeline", new TranslatedResult2ElasticMapper(), destinationPath, threadsNumber));
+          taskHandlers.add(new Translator("http://neamt3.cs.upb.de:6100/custom-pipeline", new TranslatedResult2ElasticMapper(), destinationPath, threadsNumber));
+          taskHandlers.add(new Translator("http://neamt4.cs.upb.de:6100/custom-pipeline", new TranslatedResult2ElasticMapper(), destinationPath, threadsNumber));
+          taskHandlers.add(new Translator("http://neamt5.cs.upb.de:6100/custom-pipeline", new TranslatedResult2ElasticMapper(), destinationPath, threadsNumber));
+          FolderCrawler folderCrawler = new FolderCrawler(taskHandlers);
           folderCrawler.start(startFolderPath);
       }
 
@@ -562,9 +582,6 @@ public class UtilitytoolsApplication implements CommandLineRunner {
           String apistatusCheck = args[4];
           String isContinuing = args[5];
           String progressfilePath = args[6];
-
-          File startFolder = ioService.readFile(filePath);
-          File destination = ioService.readFile(destinationFilePath);
 
 //http://localhost:5000/check?text=
           APICaller apic = new APICaller(api,destinationFilePath, apistatusCheck,progressfilePath);
@@ -614,6 +631,100 @@ public class UtilitytoolsApplication implements CommandLineRunner {
                   }
               }
               apic.handleTaskFromFile();
+          }
+      }
+
+      // 17 jsonlCallProcessResult [json file] [destination file] [api to call]
+      if(args.length == 4 && args[0].equals("jsonlCallProcessResult")){
+          String filePath = args[1];
+          String destinationFilePath = args[2];
+          String api = args[3];
+
+//http://localhost:5000/textsearch?text=
+          APICaller apic = new APICaller(api,destinationFilePath, "","temp");
+          try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+              String line;
+              while ((line = reader.readLine()) != null) {
+                  JSONObject obj = new JSONObject(line);
+                  String claim = obj.getString("claim");
+                  String label = obj.getString("label");
+                  BigInteger id = obj.getBigInteger("id");
+                  if(id.toString().equals("138117")){
+                      String we;
+                      we = "new test";
+                  }
+                  try {
+                      HttpResponse<String> res = Unirest.get(api+apic.urlEncode(claim,"UTF-8"))
+                              .asString();
+                      String body = res.getBody();
+                      JSONObject responseAsJson = new JSONObject(body);
+                      JSONArray tempresults = responseAsJson.getJSONArray("results");
+                      if(tempresults.length()==0){
+                          System.out.println("not calculated :"+claim);
+                      }else{
+                          JSONObject lastchild = (JSONObject)tempresults.get(tempresults.length()-1);
+                          int STAGE_NUMBER = lastchild.getInt("STAGE_NUMBER");
+                          if(STAGE_NUMBER <3){
+                              System.out.println("steeps not complete :"+claim);
+                          }else{
+                              //JSONObject claimCheckWorthinessResult = new JSONObject(lastchild.getString("CLAIM_CHECK_WORTHINESS_RESULT"));
+                              //JSONObject evidenceRetrivalResult = new JSONObject(lastchild.getString("EVIDENCE_RETRIVAL_RESULT"));
+                              String tmpstances = lastchild.getString("STANCE_DETECTION_RESULT");
+
+                              tmpstances = tmpstances.replace("\n","");
+                              //System.out.println(tmpstances);
+                              //System.out.println("------"+id);
+                              tmpstances = tmpstances.replace(",\"[",",'[").replace(",\"(",",'(").replace(",\" ",",' ").replace(",\t ",",'\t").replace("\": ","': ").replaceAll("[a-zA-Z],\\\"",",'");
+                              tmpstances = tmpstances.replace("{\"","__XX__").replace("\":\"","__YY__").replace("\",\"","__ZZ__");
+                              tmpstances = tmpstances.replace("\":","__OO__").replace(",\"","__HH__");
+                              tmpstances = tmpstances.replace("\"","'");
+                              tmpstances = tmpstances.replace("__XX__","{\"").replace("__YY__","\":\"").replace("__ZZ__","\",\"");
+                              tmpstances = tmpstances.replace("__OO__","\":").replace("__HH__",",\"");
+                              //System.out.println(tmpstances);
+                              JSONObject stanceDetectionResult = new JSONObject(tmpstances);
+                              StringBuilder jsonl = new StringBuilder();
+                              jsonl.append("{\"label\":\"");
+                              jsonl.append(label);
+                              jsonl.append("\",\"id\":\"");
+                              jsonl.append(id);
+                              jsonl.append("\",\"scores\":[");
+
+                              JSONArray stances = stanceDetectionResult.getJSONArray("stances");
+                              for(int stance_c = 0 ; stance_c < stances.length() ; stance_c++){
+                                  JSONObject tmpc  = (JSONObject)stances.get(stance_c);
+                                  Double elastic_score = tmpc.getDouble("elastic_score");
+                                  Double stance_score = tmpc.getDouble("stance_score");
+                                  jsonl.append("{\"elastic_score\":"+elastic_score+",");
+                                  jsonl.append("\"stance_score\":"+stance_score+"}");
+                                  if(stance_c+1<stances.length()){
+                                      jsonl.append(",");
+                                  }
+                              }
+                              jsonl.append("]}");
+
+                              // write to file
+
+                              try (BufferedWriter writer = new BufferedWriter(new FileWriter(destinationFilePath, true))) {
+                                  writer.write(jsonl.toString());
+                                  writer.newLine();
+                              } catch (IOException e) {
+                                  e.printStackTrace();
+                              }
+                          }
+                      }
+
+                  }catch (Exception ex){
+                      //ex.printStackTrace();
+                      try (BufferedWriter writer = new BufferedWriter(new FileWriter(destinationFilePath+".error", true))) {
+                          writer.write(claim);
+                          writer.newLine();
+                      } catch (IOException e) {
+                          e.printStackTrace();
+                      }
+                  }
+              }
+          } catch (IOException e) {
+              System.out.println("An error occurred while reading the file: " + e.getMessage());
           }
       }
 

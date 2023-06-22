@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
 import org.dice.utilitytools.mapper.TranslatedResult2ElasticMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
@@ -18,6 +20,7 @@ import java.util.concurrent.Executors;
 
 
 public class Translator implements ITaskHandler<Void, HashMap<String,Boolean>>{
+    private static final Logger LOGGGER = LoggerFactory.getLogger(Translator.class);
     int threadsNumber;
     private String destinationPath;
     private TranslatedResult2ElasticMapper translatedResult2ElasticMapper;
@@ -34,7 +37,7 @@ public class Translator implements ITaskHandler<Void, HashMap<String,Boolean>>{
 
     public String sendTranslationRequest(String textToTranslate) {
 try {
-    HttpResponse<String> res = Unirest.post("http://neamt.cs.upb.de:6100/custom-pipeline")
+    HttpResponse<String> res = Unirest.post(url)
             .header("Content-Type", "application/x-www-form-urlencoded")
             .field("components", "mbart_mt")
             .field("lang", "de")
@@ -43,8 +46,8 @@ try {
     return res.getBody();
 
 }catch (Exception ex){
-    System.out.println(ex.getMessage());
-    System.out.println(ex.getStackTrace());
+    LOGGGER.error(ex.getMessage());
+    LOGGGER.error(ex.getStackTrace().toString());
     return "";
 }
 
@@ -68,23 +71,21 @@ try {
 
     public Void ht(File file) {
         try{
-            System.out.println("translating this File: " + file.getName());
+            LOGGGER.info("translating this File: " + file.getName());
             String maintextToTranslate = extractTextForTranslate(file,"maintext");
             String descriptionToTranslate = extractTextForTranslate(file,"description");
             String titleToTranslate = extractTextForTranslate(file,"title");
 
             if(maintextToTranslate == null){
-                System.out.println("error in extracing text for translate from  file: " + file.getAbsolutePath());
+                LOGGGER.error("error in extracing text for translate from  file: " + file.getAbsolutePath());
             }
             else {
-                System.out.println("start translating");
                 String translatedMaintextToTranslate = sendTranslationRequest(maintextToTranslate).replace("\"", "");
                 String translatedDescription = sendTranslationRequest(descriptionToTranslate).replace("\"", "");
                 String translatedTitle = sendTranslationRequest(titleToTranslate).replace("\"", "");
-                System.out.println("done translating");
                 if (translatedMaintextToTranslate.length() < 20) {
                     // log as a error
-                    System.out.println("error in translation part for this file: " + file.getAbsolutePath() + " text to translate was: " + maintextToTranslate + " translated is : " + translatedMaintextToTranslate);
+                    LOGGGER.error("error in translation part for this file: " + file.getAbsolutePath() + " text to translate was: " + maintextToTranslate + " translated is : " + translatedMaintextToTranslate);
                 } else {
                     //String textToSaveAsFile = replaceNode(file,"maintext",translatedResponce);
                     //String textToSaveAsFile = translatedResult2ElasticMapper.map(translatedResponce,url);
@@ -100,14 +101,15 @@ try {
 
                     if (isSuccess) {
                         //remove file
-                        System.out.println("deleting " + file.getAbsolutePath());
+                        LOGGGER.info("deleting " + file.getAbsolutePath());
                         file.delete();
                     }
 
                 }
             }
-        }catch (Exception exception){
-
+        }catch (Exception ex){
+            LOGGGER.error(ex.getMessage());
+            LOGGGER.error(ex.getStackTrace().toString());
         }
         return null;
     }
@@ -180,8 +182,10 @@ try {
             }
             // Or using Files class
             // Files.write(Paths.get(filePath), text.getBytes());
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            LOGGGER.error(ex.getMessage());
+            LOGGGER.error(ex.getStackTrace().toString());
             return false;
         }
     }

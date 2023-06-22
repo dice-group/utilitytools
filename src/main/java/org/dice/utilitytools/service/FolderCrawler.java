@@ -1,17 +1,15 @@
 package org.dice.utilitytools.service;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.dice.utilitytools.mapper.TranslatedResult2ElasticMapper;
 import org.dice.utilitytools.service.handler.ITaskHandler;
-import org.dice.utilitytools.service.handler.Translator;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
 
@@ -19,17 +17,46 @@ import java.util.List;
  */
 public class FolderCrawler {
     HashMap<String,Boolean> paths = new HashMap<>();
-    private ITaskHandler taskHandler;
-    public FolderCrawler(ITaskHandler taskHandler) {
+    private List<ITaskHandler> taskHandler;
+    public FolderCrawler(List<ITaskHandler> taskHandler) {
         this.taskHandler = taskHandler;
     }
 
     public void start(String startPath) throws IOException {
         crawl(new File(startPath));
-        taskHandler.handleTask(paths);
+        int numberOfSubGroups = taskHandler.size();
+
+        if(numberOfSubGroups==1){
+            taskHandler.get(0).handleTask(paths);
+        }else{
+            List<HashMap<String,Boolean>> subgroups = splitThePaths(paths,numberOfSubGroups);
+
+            ExecutorService executor = Executors.newFixedThreadPool(subgroups.size());
+
+            for (int  subGroupC = 0 ; subGroupC<subgroups.size() ; subGroupC++) {
+                int finalSubGroupC = subGroupC;
+                executor.submit(() -> {
+                    taskHandler.get(finalSubGroupC).handleTask(subgroups.get(finalSubGroupC));
+                });
+            }
+            executor.shutdown();
+        }
     }
 
-    private void crawl(File folder) throws IOException {
+    private List<HashMap<String, Boolean>> splitThePaths(HashMap<String, Boolean> paths, int numberOfSubGroups) {
+        List<HashMap<String, Boolean>> lhm = new ArrayList<>();
+        for(int i = 0 ; i < numberOfSubGroups ; i++){
+            lhm.add(new HashMap<>());
+        }
+        int counter = 0;
+        for (Map.Entry<String, Boolean> entry:paths.entrySet()) {
+            lhm.get(counter%numberOfSubGroups).put(entry.getKey(),entry.getValue());
+            counter++;
+        }
+        return lhm;
+    }
+
+    private void crawl(File folder) {
         File[] files = folder.listFiles();
         for (File file : files) {
             if (file.isDirectory()) {
