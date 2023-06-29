@@ -19,6 +19,7 @@ import org.dice.utilitytools.service.FolderCrawler;
 import org.dice.utilitytools.service.NtFileUpdate.NtFileUpdater;
 import org.dice.utilitytools.service.Query.QueryExecutioner;
 import org.dice.utilitytools.service.handler.APICaller;
+import org.dice.utilitytools.service.handler.CorefrenceResulotionGenerator;
 import org.dice.utilitytools.service.handler.ITaskHandler;
 import org.dice.utilitytools.service.handler.Translator;
 import org.dice.utilitytools.service.filter.CommonRDFFilter;
@@ -70,6 +71,20 @@ public class UtilitytoolsApplication implements CommandLineRunner {
   public static void main(String[] args) {
     SpringApplication.run(UtilitytoolsApplication.class, args);
   }
+
+    boolean isDirectoryExist(String path){
+        File directory = new File(path);
+        if (!directory.exists()) {
+            System.out.println(path+" no folder exist");
+            return false;
+        }
+
+        if (!directory.isDirectory()) {
+            System.out.println(path + " is not a directory");
+            return false;
+        }
+        return true;
+    }
 
   @Override
   public void run(String... args) throws Exception {
@@ -540,26 +555,8 @@ public class UtilitytoolsApplication implements CommandLineRunner {
           String startFolderPath = args[1];
           String destinationPath = args[2];
           int threadsNumber = Integer.parseInt(args[3]);
-          File startFolder = new File(startFolderPath);
-          File destination = new File(destinationPath);
 
-          if (!startFolder.exists()) {
-              System.out.println(startFolderPath+" no folder exist");
-              return;
-          }
-
-          if (!startFolder.isDirectory()) {
-              System.out.println(startFolderPath + " is not a directory");
-              return;
-          }
-
-          if (!destination.exists()) {
-              System.out.println(destinationPath+"no folder exist");
-              return;
-          }
-
-          if (!destination.isDirectory()) {
-              System.out.println(destinationPath + " is not a directory");
+          if(!isDirectoryExist(startFolderPath) || !isDirectoryExist(destinationPath)){
               return;
           }
 
@@ -661,6 +658,7 @@ public class UtilitytoolsApplication implements CommandLineRunner {
                       JSONArray tempresults = responseAsJson.getJSONArray("results");
                       if(tempresults.length()==0){
                           System.out.println("not calculated :"+claim);
+                          addForCheck(id, claim, label,filePath, destinationFilePath);
                       }else{
                           JSONObject lastchild = (JSONObject)tempresults.get(tempresults.length()-1);
                           int STAGE_NUMBER = lastchild.getInt("STAGE_NUMBER");
@@ -715,12 +713,7 @@ public class UtilitytoolsApplication implements CommandLineRunner {
 
                   }catch (Exception ex){
                       //ex.printStackTrace();
-                      try (BufferedWriter writer = new BufferedWriter(new FileWriter(destinationFilePath+".error", true))) {
-                          writer.write(claim);
-                          writer.newLine();
-                      } catch (IOException e) {
-                          e.printStackTrace();
-                      }
+                      addForCheck(id, claim, label,filePath,destinationFilePath);
                   }
               }
           } catch (IOException e) {
@@ -728,6 +721,31 @@ public class UtilitytoolsApplication implements CommandLineRunner {
           }
       }
 
+
+      // 18. use 'CrR' to calculate the Coreference Resolution of all texts in a directory
+      if(args.length == 3 && args[0].equals("CrR")){
+          String startFolderPath = args[1];
+          String destinationPath = args[2];
+
+          if(!isDirectoryExist(startFolderPath) || !isDirectoryExist(destinationPath)){
+              return;
+          }
+
+          List<ITaskHandler> taskHandlers = new ArrayList<>();
+          taskHandlers.add(new CorefrenceResulotionGenerator(destinationPath));
+          FolderCrawler folderCrawler = new FolderCrawler(taskHandlers);
+          folderCrawler.start(startFolderPath);
+      }
+
       System.out.println("Finish");
   }
+
+    private void addForCheck(BigInteger id, String claim, String label,String filePath,String destinationFilePath) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(destinationFilePath+".tsv.error", true))) {
+            writer.write(id+"\t"+label+"\t"+claim+"\t"+filePath);
+            writer.newLine();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }
