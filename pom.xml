@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>org.dice</groupId>
 	<artifactId>utilitytools</artifactId>
-	<version>0.0.4</version>
+	<version>0.0.5</version>
 	<name>utilitytools</name>
 	<description>Demo project for Spring Boot</description>
 	<packaging>jar</packaging>
@@ -18,7 +18,7 @@
 		<java.version>1.8</java.version>
 	</properties>
 	
-<!-- 	<repositories>
+ 	<repositories>
 		<repository>
 			<id>maven.aksw.internal</id>
 			<name>University Leipzig, AKSW Maven2 Repository</name>
@@ -30,7 +30,7 @@
 			<url>http://maven.aksw.org/repository/snapshots</url>
 		</repository>
 	</repositories>
- -->
+
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

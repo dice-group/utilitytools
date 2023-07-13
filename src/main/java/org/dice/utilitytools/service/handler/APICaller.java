@@ -78,6 +78,30 @@ public class APICaller implements ITaskHandler <Void, HashMap<String,Boolean>>{
         return null;
     }
 
+    public Void handleTaskTSV(HashMap<String,Boolean> input) {
+
+        int counter = 0;
+        for (Map.Entry<String, Boolean> entry : input.entrySet()) {
+            if(needToSaveProgress){
+                if(entry.getValue()){
+                    System.out.println("previous calculated");
+                    continue;
+                }
+            }
+            String tsv = entry.getKey();
+            Boolean value = entry.getValue();
+            boolean updateTheProgress = handleTsv(tsv);
+            if(updateTheProgress){
+                entry.setValue(true);
+            }
+            counter  = counter+1;
+            if(counter%100 == 0) {
+                updateProgress(input);
+            }
+        }
+        return null;
+    }
+
     private boolean handleJson(String jsonString) {
         try {
             JSONObject obj = new JSONObject(jsonString);
@@ -85,8 +109,49 @@ public class APICaller implements ITaskHandler <Void, HashMap<String,Boolean>>{
             String label = obj.getString("label");
             String claim = obj.getString("claim");
 
-            String jsonResponce = sendTranslationRequest(claim);
+            String jsonResponce = sendRequest(claim);
             obj = new JSONObject(jsonResponce);
+            String nebulaId = obj.getString("id");
+            //TimeUnit.SECONDS.sleep(5);
+            try (FileWriter fileWriter = new FileWriter(this.progressFilePath+"_2.tsv", true)) {
+                fileWriter.write(id+"\t"+label+"\t"+nebulaId+"\t"+claim);
+                fileWriter.write(System.lineSeparator()); // Add a new line after the appended content
+                System.out.println("Content appended to the file.");
+                counter = counter +1;
+                System.out.println(counter);
+
+                boolean isDone = checkStatus(nebulaId);
+                while (!isDone) {
+                    try {
+                        Thread.sleep(1000); // Wait for 1 second before checking again
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    isDone = checkStatus(nebulaId);
+                }
+                //update progress
+                if(needToSaveProgress){
+                    return true;
+                }
+            } catch (IOException e) {
+                System.out.println("An error occurred while appending the file: " + e.getMessage());
+                //do not update progress
+            }
+        }catch (Exception exception){
+            System.out.println(exception.getMessage());
+        }
+        return false;
+    }
+
+    private boolean handleTsv(String tsvString) {
+        try {
+            String[] parts = tsvString.split("\t");
+            String id = parts[0];
+            String label = parts[1];
+            String claim = parts[2];
+
+            String jsonResponce = sendRequest(claim);
+            JSONObject obj = new JSONObject(jsonResponce);
             String nebulaId = obj.getString("id");
             //TimeUnit.SECONDS.sleep(5);
             try (FileWriter fileWriter = new FileWriter(this.progressFilePath+"_2.tsv", true)) {
@@ -119,6 +184,7 @@ public class APICaller implements ITaskHandler <Void, HashMap<String,Boolean>>{
         return false;
     }
 
+
     private boolean checkStatus(String id) {
         try {
             HttpResponse<String> res = Unirest.get(this.urlCheckStatus+urlEncode(id,"UTF-8"))
@@ -132,7 +198,7 @@ public class APICaller implements ITaskHandler <Void, HashMap<String,Boolean>>{
         return false;
     }
 
-    public String sendTranslationRequest(String textToquery) {
+    public String sendRequest(String textToquery) {
         try {
             HttpResponse<String> res = Unirest.get(this.url+urlEncode(textToquery,"UTF-8"))
                     .asString();
@@ -174,6 +240,28 @@ public class APICaller implements ITaskHandler <Void, HashMap<String,Boolean>>{
                     }
                     handleTask(progress);
                 }
+        }
+    }
+    public void handleTaskFromFileTSV() {
+        HashMap<String,Boolean> progress = new HashMap<>();
+        if(!needToSaveProgress){
+            System.out.println("there was an error to read a progress file");
+        }else{
+            if (progressFile.exists()) {
+                try {
+                    FileInputStream fileIn = new FileInputStream(this.progressFilePath);
+                    ObjectInputStream in = new ObjectInputStream(fileIn);
+                    progress = (HashMap) in.readObject();
+                    in.close();
+                    fileIn.close();
+                } catch (IOException i) {
+                    i.printStackTrace();
+                } catch (ClassNotFoundException c) {
+                    System.out.println("Employee class not found");
+                    c.printStackTrace();
+                }
+                handleTaskTSV(progress);
+            }
         }
     }
 

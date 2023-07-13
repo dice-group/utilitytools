@@ -46,6 +46,7 @@ try {
     return res.getBody();
 
 }catch (Exception ex){
+    LOGGGER.error(url);
     LOGGGER.error(ex.getMessage());
     LOGGGER.error(ex.getStackTrace().toString());
     return "";
@@ -71,12 +72,14 @@ try {
 
     public Void ht(File file) {
         try{
+            LOGGGER.info(url);
             LOGGGER.info("translating this File: " + file.getName());
             String maintextToTranslate = extractTextForTranslate(file,"maintext");
             String descriptionToTranslate = extractTextForTranslate(file,"description");
             String titleToTranslate = extractTextForTranslate(file,"title");
 
             if(maintextToTranslate == null){
+                LOGGGER.error(url);
                 LOGGGER.error("error in extracing text for translate from  file: " + file.getAbsolutePath());
             }
             else {
@@ -85,6 +88,7 @@ try {
                 String translatedTitle = sendTranslationRequest(titleToTranslate).replace("\"", "");
                 if (translatedMaintextToTranslate.length() < 20) {
                     // log as a error
+                    LOGGGER.error(url);
                     LOGGGER.error("error in translation part for this file: " + file.getAbsolutePath() + " text to translate was: " + maintextToTranslate + " translated is : " + translatedMaintextToTranslate);
                 } else {
                     //String textToSaveAsFile = replaceNode(file,"maintext",translatedResponce);
@@ -108,6 +112,7 @@ try {
                 }
             }
         }catch (Exception ex){
+            LOGGGER.error(url);
             LOGGGER.error(ex.getMessage());
             LOGGGER.error(ex.getStackTrace().toString());
         }
@@ -183,6 +188,7 @@ try {
             // Or using Files class
             // Files.write(Paths.get(filePath), text.getBytes());
         } catch (IOException ex) {
+            LOGGGER.error(url);
             ex.printStackTrace();
             LOGGGER.error(ex.getMessage());
             LOGGGER.error(ex.getStackTrace().toString());
