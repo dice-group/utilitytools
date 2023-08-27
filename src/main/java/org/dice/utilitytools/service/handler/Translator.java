@@ -32,7 +32,7 @@ public class Translator implements ITaskHandler<Void, HashMap<String,Boolean>>{
         this.url = url;
         this.destinationPath = destinationPath;
         this.threadsNumber = threadsNumber;
-        Unirest.setTimeouts(600000,300000);
+        Unirest.setTimeouts(6000000,6000000 );
     }
 
     public String sendTranslationRequest(String textToTranslate) {
