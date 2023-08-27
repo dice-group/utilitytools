@@ -16,7 +16,7 @@ public class CrRtest {
     {
         CorefrenceResulotionGenerator CrR = new CorefrenceResulotionGenerator(null);
         String accutal = CrR.generateCrR("Barack Obama was born in Hawaii.  He is the president. Obama was elected in 2008.");
-        String expected = "Barack Barack Obama was born in Hawaii.  Barack Barack Obama is Barack Barack Obama. Barack Obama was elected in 2008.";
+        String expected = "Barack Obama was born in Hawaii. Barack Obama is Barack Obama. Barack Obama was elected in 2008.";
         assertEquals(expected, accutal);
     }
 }
