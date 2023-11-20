@@ -5,6 +5,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.stream.Collectors;
 
@@ -790,14 +791,10 @@ public class UtilitytoolsApplication implements CommandLineRunner {
           String startFolderPath = args[1];
           String destinationPath = args[2];
 
-          if(!isDirectoryExist(startFolderPath) || !isDirectoryExist(destinationPath)){
-              return;
-          }
-
-          List<ITaskHandler> taskHandlers = new ArrayList<>();
-          taskHandlers.add(new CorefrenceResulotionGenerator(destinationPath));
-          FolderCrawler folderCrawler = new FolderCrawler(taskHandlers);
-          folderCrawler.start(startFolderPath);
+          CorefrenceResulotionGenerator coref = new CorefrenceResulotionGenerator(destinationPath);
+          HashMap<String, Boolean> input = new HashMap<String, Boolean>();
+          input.put(startFolderPath, false);
+          coref.handleTask(input);
       }
 
       System.out.println("Finish");
